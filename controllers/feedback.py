@@ -111,6 +111,7 @@ def view_feedback():
     submission_grade = submission_percentile = None
     review_grade = review_percentile = user_reputation = None
     final_grade = final_percentile = None
+    assigned_grade = None
     if c.grades_released:
         grade_info = db((db.grades.user == username) & (db.grades.venue_id == c.id)).select().first()
         if grade_info is not None:
