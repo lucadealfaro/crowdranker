@@ -528,7 +528,7 @@ def crowd_grade():
             Field('normalize_grades', 'boolean', default=ALGO_DEFAULT_NORMALIZE),
             Field('normalization_scale', 'double', default=ALGO_DEFAULT_NORMALIZATION_SCALE, requires=IS_FLOAT_IN_RANGE(0.01, 1000.0)),
             Field('reputation_method', default=ALGO_DEFAULT_REPUTATION_METHOD, requires=IS_IN_SET([ALGO_DEFAULT_REPUTATION_METHOD, 'stdev'])),
-            Field('precision_coefficient', default=ALGO_DEFAULT_PREC_COEFF, requires=IS_FLOAT_IN_RANGE(0.0, 1000.0)),
+            Field('precision_coefficient', 'double', default=ALGO_DEFAULT_PREC_COEFF, requires=IS_FLOAT_IN_RANGE(0.0, 1000.0)),
             Field('use_submission_rank_in_reputation', 'boolean', default=True),
             Field('submission_rank_exponent_for_reputation', 'double', default=ALGO_DEFAULT_RANK_REP_EXP, requires=IS_FLOAT_IN_RANGE(0.1, 10.0)),
             Field('num_iterations', 'integer', default=ALGO_DEFAULT_NUM_ITERATIONS, requires=IS_INT_IN_RANGE(1, 20)),
