@@ -527,6 +527,8 @@ def crowd_grade():
             Field('neg_slope', 'double', default=ALGO_DEFAULT_NEG_SLOPE, requires=IS_FLOAT_IN_RANGE(0.0, 1000.0)),
             Field('normalize_grades', 'boolean', default=ALGO_DEFAULT_NORMALIZE),
             Field('normalization_scale', 'double', default=ALGO_DEFAULT_NORMALIZATION_SCALE, requires=IS_FLOAT_IN_RANGE(0.01, 1000.0)),
+            Field('reputation_method', default=ALGO_DEFAULT_REPUTATION_METHOD, requires=IS_IN_SET([ALGO_DEFAULT_REPUTATION_METHOD, 'stdev'])),
+            Field('precision_coefficient', default=ALGO_DEFAULT_PREC_COEFF, requires=IS_FLOAT_IN_RANGE(0.0, 1000.0)),
             Field('use_submission_rank_in_reputation', 'boolean', default=True),
             Field('submission_rank_exponent_for_reputation', 'double', default=ALGO_DEFAULT_RANK_REP_EXP, requires=IS_FLOAT_IN_RANGE(0.1, 10.0)),
             Field('num_iterations', 'integer', default=ALGO_DEFAULT_NUM_ITERATIONS, requires=IS_INT_IN_RANGE(1, 20)),
@@ -547,6 +549,8 @@ def crowd_grade():
             neg_slope = form.vars.neg_slope
             normalize_grades = form.vars.normalize_grades
             normalization_scale = form.vars.normalization_scale
+            reputation_method = form.vars.reputation_method
+            precision_coefficient = form.vars.precision_coefficient
             use_submission_rank_in_reputation = form.vars.use_submission_rank_in_reputation
             submission_rank_exp = form.vars.submission_rank_exponent_for_reputation
             num_iterations = form.vars.num_iterations
@@ -559,6 +563,8 @@ def crowd_grade():
             neg_slope = ALGO_DEFAULT_NEG_SLOPE
             normalize_grades = ALGO_DEFAULT_NORMALIZE
             normalization_scale = ALGO_DEFAULT_NORMALIZATION_SCALE
+            reputation_method = ALGO_DEFAULT_REPUTATION_METHOD
+            precision_coefficient = ALGO_DEFAULT_PREC_COEFF
             use_submission_rank_in_reputation = True
             submission_rank_exp = ALGO_DEFAULT_RANK_REP_EXP
             num_iterations = ALGO_DEFAULT_NUM_ITERATIONS
@@ -573,6 +579,8 @@ def crowd_grade():
                     REPUTATION_SYSTEM_NEG_SLOPE: neg_slope,
                     REPUTATION_SYSTEM_NORMALIZE_GRADES: normalize_grades,
                     REPUTATION_SYSTEM_NORMALIZATION_SCALE: normalization_scale,
+                    REPUTATION_SYSTEM_REPUTATION_METHOD: reputation_method,
+                    REPUTATION_SYSTEM_PREC_COEFF: precision_coefficient,
                     REPUTATION_SYSTEM_PARAM_REVIEW_PERCENTAGE: c.reviews_as_percentage_of_grade,
                     REPUTATION_SYSTEM_USE_SUBMISSION_RANK_IN_REP: use_submission_rank_in_reputation,
                     REPUTATION_SYSTEM_SUBMISSION_RANK_REP_EXP: submission_rank_exp,

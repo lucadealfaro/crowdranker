@@ -15,8 +15,7 @@ import gluon.contrib.simplejson as simplejson
 class MinimizationObjective:
     """ Class contains methods for computing objective function Q for
     main optimization problem, its gradient and hessian matrix. """
-    def __init__(self, D, delta_vec, cost_type='default', pos_slope=1.0,
-                 neg_slope=2.0):
+    def __init__(self, D, delta_vec):
         """
         Let g_m^i be a grade for submission i assigned by author of comparison
         m.
@@ -36,17 +35,14 @@ class MinimizationObjective:
             x is an arguemnt for some methods of the class (x supposed to be
             true grades). x is syncronized with matrix D in a way that
             i-th column corresponds to x[i] - grade of submission i.
-            - cost_type  defines possible cost types:
+            - current.cost_type  defines possible cost types:
             'linear' - uses cost of type slope * y * y/(1 + |y|) on both sides
             in all other cases cost fuction is y*y when y < 0, and y*y/(1+y)
             when y >= 0.
-            - pos_slope and neg_slope are coefficients for 'linear' cost function
+            - current.pos_slope and current.neg_slope are coefficients for 'linear' cost function
         """
         self.D = D
         self.D_T = D.transpose()
-        self.cost_type = cost_type
-        self.pos_slope = pos_slope
-        self.neg_slope = neg_slope
         # TODO(michael): if pseudoinverse takes too much time then
         # get rid of next two lines (matrix D can be huge).
         self.D_pinv = np.linalg.pinv(D) # Moore-Penrose pseudoinverse
@@ -56,11 +52,11 @@ class MinimizationObjective:
     def compute_f(self, x):
         """ About argumetns please look at function compute_Q. """
         y = np.dot(self.D, x) - self.delta_vec
-        if self.cost_type == 'linear':
-            # Cost function is neg_slope * y * y/(1 - y) when y < 0, and
-            # pos_slope * y * y/(1 + y) when y >= 0.
-            f_neg = self.neg_slope * y ** 2 / (1 + np.abs(y))
-            f_pos = self.pos_slope * y ** 2 / (1 + np.abs(y))
+        if current.cost_type == 'linear':
+            # Cost function is current.neg_slope * y * y/(1 - y) when y < 0, and
+            # current.pos_slope * y * y/(1 + y) when y >= 0.
+            f_neg = current.neg_slope * y ** 2 / (1 + np.abs(y))
+            f_pos = current.pos_slope * y ** 2 / (1 + np.abs(y))
         else:
             # Cost fuction is y*y when y < 0, and y*y/(1+y) when y >= 0.
             f_neg = 1.0 * y ** 2
@@ -71,11 +67,11 @@ class MinimizationObjective:
 
     def compute_f_prime(self, x):
         y = np.dot(self.D, x) - self.delta_vec
-        if self.cost_type == 'linear':
+        if current.cost_type == 'linear':
             f_neg = 2.0 * y / (1 + np.abs(y)) + 1.0 * y ** 2 / (1 + np.abs(y)) ** 2
-            f_neg = self.neg_slope * f_neg
+            f_neg = current.neg_slope * f_neg
             f_pos = 2.0 * y / (1 + np.abs(y)) - 1.0 * y ** 2 / (1 + np.abs(y)) ** 2
-            f_pos = self.pos_slope * f_pos
+            f_pos = current.pos_slope * f_pos
         else:
             f_neg = 2.0 * y
             f_pos = 2.0 * y / (1 + np.abs(y)) - 1.0 * y ** 2 / (1 + np.abs(y)) ** 2
@@ -85,13 +81,13 @@ class MinimizationObjective:
 
     def compute_f_dbl_prime(self, x):
         y = np.dot(self.D, x) - self.delta_vec
-        if self.cost_type == 'linear':
+        if current.cost_type == 'linear':
             f_neg = (2.0 / (1 + np.abs(y)) + 4.0 * y / (1 + np.abs(y)) ** 2 +
                      2.0 * y ** 2 / (1 + np.abs(y)) ** 3)
-            f_neg = self.neg_slope * f_neg
+            f_neg = current.neg_slope * f_neg
             f_pos = (2.0 / (1 + np.abs(y)) - 4.0 * y / (1 + np.abs(y)) ** 2 +
                      2.0 * y ** 2 / (1 + np.abs(y)) ** 3)
-            f_pos = self.pos_slope * f_pos
+            f_pos = current.pos_slope * f_pos
         else:
             f_neg = 2.0 * (np.zeros(len(y)) + 1)
             f_pos = (2.0 / (1 + np.abs(y)) - 4.0 * y / (1 + np.abs(y)) ** 2 +
@@ -183,16 +179,13 @@ def decode_json_grades(dict_grades_json):
         subm_id_to_grade[s_id] = float(g)
     return subm_id_to_grade
 
-def get_num_rows_of_D(compar_rows, how_to_construct_compar="all_possible_comb"):
+def get_num_rows_of_D(compar_rows):
     """Computes number of rows in matrix D."""
     num_rows = 0
     for r in compar_rows:
-        if how_to_construct_compar == 'all_possible_comb':
-            m = len(util.get_list(r.ordering))
-            if m >= 2:
-                num_rows += (m - 1) * m * 0.5
-        else:
-            raise Exception("Error, how to construct binary comparisons?!")
+        m = len(util.get_list(r.ordering))
+        if m >= 2:
+            num_rows += (m - 1) * m * 0.5
     return num_rows
 
 
@@ -251,9 +244,7 @@ def get_number_of_tasks(venue_id):
     return user_to_n_completed_tasks, user_to_n_graded_tasks, user_to_n_rejected_tasks
 
 
-def read_db_for_ranking_by_grades(venue_id, normalize_grades_diff=True,
-                                  normalize=True, normalization_scale=1.0,
-                                  how_to_construct_compar= "all_possible_comb"):
+def read_db_for_ranking_by_grades(venue_id):
     """ The method fills matrix D, vector delta_vec and other containers
     with infrom form the db.
     argument how_to_construct_compar defines how to construct binary
@@ -297,7 +288,7 @@ def read_db_for_ranking_by_grades(venue_id, normalize_grades_diff=True,
     idx_to_subm_id = dict((idx, subm_id) for (subm_id, idx) in
                                               subm_id_to_idx.iteritems())
     # Caluculate dimensions if D and length of delta_vec.
-    num_rows = get_num_rows_of_D(rows, how_to_construct_compar)
+    num_rows = get_num_rows_of_D(rows)
     num_columns = len(subm_id_to_idx)
     current.logger.info("Size of D: %d columns, %d rows" % (num_columns, num_rows))
     D = np.zeros((num_rows, num_columns))
@@ -312,39 +303,36 @@ def read_db_for_ranking_by_grades(venue_id, normalize_grades_diff=True,
         if len(subm_id_to_grade) > 1:
             user_to_grades_dict[r.user] = subm_id_to_grade
         # Filling matrix D and vector delta_vec.
-        if how_to_construct_compar == 'all_possible_comb':
-            normaliz = 1
-            if normalize_grades_diff and len(ordering) > 1:
-                normaliz = float(subm_id_to_grade[ordering[0]] -
-                                 subm_id_to_grade[ordering[-1]])
-            for i in xrange(len(ordering)):
-                if not subm_id_to_idx.has_key(ordering[i]):
+        normaliz = 1.0
+        if len(ordering) > 1:
+            normaliz = float(subm_id_to_grade[ordering[0]] -
+                             subm_id_to_grade[ordering[-1]])
+        for i in xrange(len(ordering)):
+            if not subm_id_to_idx.has_key(ordering[i]):
+                continue
+            for j in xrange(i + 1, len(ordering), 1):
+                if not subm_id_to_idx.has_key(ordering[j]):
                     continue
-                for j in xrange(i + 1, len(ordering), 1):
-                    if not subm_id_to_idx.has_key(ordering[j]):
-                        continue
-                    g_i = subm_id_to_grade[ordering[i]]
-                    g_j = subm_id_to_grade[ordering[j]]
-                    #TODO(michael): delete grades comparison later,
-                    # now it is for sanity check.
-                    if g_i < g_j:
-                        raise Exception("Error, grades are in a wrong order!")
-                    idx_i = subm_id_to_idx[ordering[i]]
-                    idx_j = subm_id_to_idx[ordering[j]]
-                    D[idx, idx_i] = 1
-                    D[idx, idx_j] = -1
-                    # Normailzation.
-                    if normalize:
-                        delta_vec[idx] = (g_i - g_j) / normaliz
-                        delta_vec[idx] *= normalization_scale
-                    else:
-                        delta_vec[idx] = g_i - g_j
-                    if not user_to_bin_comp_idx_list.has_key(r.user):
-                        user_to_bin_comp_idx_list[r.user] = []
-                    user_to_bin_comp_idx_list[r.user].append(idx)
-                    idx += 1
-        else:
-            raise Exception("Error, how to construct binary comparisons?!")
+                g_i = subm_id_to_grade[ordering[i]]
+                g_j = subm_id_to_grade[ordering[j]]
+                #TODO(michael): delete grades comparison later,
+                # now it is for sanity check.
+                if g_i < g_j:
+                    raise Exception("Error, grades are in a wrong order!")
+                idx_i = subm_id_to_idx[ordering[i]]
+                idx_j = subm_id_to_idx[ordering[j]]
+                D[idx, idx_i] = 1
+                D[idx, idx_j] = -1
+                # Normailzation.
+                if current.normalize_grades:
+                    delta_vec[idx] = (g_i - g_j) / normaliz
+                    delta_vec[idx] *= current.normalization_scale
+                else:
+                    delta_vec[idx] = g_i - g_j
+                if not user_to_bin_comp_idx_list.has_key(r.user):
+                    user_to_bin_comp_idx_list[r.user] = []
+                user_to_bin_comp_idx_list[r.user].append(idx)
+                idx += 1
         # Okay, now lets remember grades which was assigned to submissions.
         for subm_id, grade in subm_id_to_grade.iteritems():
             if not subm_id_to_list_of_grades.has_key(subm_id):
@@ -438,10 +426,8 @@ def write_db_for_ranking_by_grades(venue_id,
     db.commit()
 
 
-def compute_reputation(f, user_to_subm_perc, user_to_bin_compar_idx_list,
-                       subm_id_to_user, idx_to_subm_id,
-                       use_submission_rank_for_reputation=True,
-                       submission_rank_exponent=1.0):
+def compute_reputation(f, user_to_subm_perc, user_to_accuracy, 
+                       user_to_bin_compar_idx_list, subm_id_to_user, idx_to_subm_id):
     """ Returns vectors r, rep_vec and a dictionary user -> reputation.
     - r is a vector such that author of i-th binary comparison (i-th row of
     matrix D) has accuracy r_i.
@@ -458,13 +444,14 @@ def compute_reputation(f, user_to_subm_perc, user_to_bin_compar_idx_list,
         # Selects which comparisons were made by the user.
         for idx in idx_list:
             mask[idx] = 1
-        # cost is the total cost of the comparisons made by the user.
-        cost = np.sum(f * mask)
-        # ---qui---: Weight this by the rank of the student.
-        # Get this from the 
-        user_to_rep[user] = 1.0 / (1 + cost)
-        if use_submission_rank_for_reputation:
-            user_to_rep[user] *= util.get_or_0(user_to_subm_perc, user) ** submission_rank_exponent
+        # Cost is the average cost of the comparisons made by the user.
+        if current.reputation_method == 'cost':
+            cost = current.prec_coefficient * np.sum(f * mask) / np.sum(mask)
+            user_to_rep[user] = 1.0 / (1 + cost)
+        else:
+            user_to_rep[user] = user_to_accuracy[user] ** current.prec_coefficient
+        if current.use_submission_rank_in_rep:
+            user_to_rep[user] *= (util.get_or_0(user_to_subm_perc, user) / 100.0) ** current.submission_rank_exp
         for idx in idx_list:
             r[idx] = user_to_rep[user]
     rep_vec = np.zeros(len(idx_to_subm_id))
@@ -524,8 +511,8 @@ def get_accuracy_using_stdev(subm_id_to_subm_grade, user_to_grades_dict,
             g_1 = normalize_vec(g)
             s = np.std(x_1 - g_1)
             n = len(user_to_grades_dict[u])
-            accuracy = (max(0, 1 - s / 2**0.5) * min(n, num_subm_per_reviewer) /
-            float(num_subm_per_reviewer))
+            accuracy = (max(0.0, 1.0 - s / (2.0 ** 0.5)) * 
+                        min(n, num_subm_per_reviewer) / float(num_subm_per_reviewer))
         else:
             raise Exception("Please specify how to compute accuracy")
         if accuracy_type in ['stdev1', 'stdev2', 'stdev3']:
@@ -580,29 +567,23 @@ def compute_percentile(user_to_grade):
     return user_to_perc
 
 
-def compute_final_grades(user_to_subm_grade, user_to_accuracy,
-                         reviews_as_percentage_of_grade):
+def compute_final_grades(user_to_subm_grade, user_to_accuracy):
     """ Computes final grade of users as a combination of grade of a submission
     and reviewer accuracy."""
     user_to_final_grade = {}
     user_list = util.union_list(user_to_subm_grade.keys(),
                                 user_to_accuracy.keys())
     for u in user_list:
-        grade = util.get_or_0(user_to_subm_grade, u) * (100 - reviews_as_percentage_of_grade) / 100.0
-        grade += current.MAX_GRADE * util.get_or_0(user_to_accuracy, u) * reviews_as_percentage_of_grade / 100.0
+        grade = util.get_or_0(user_to_subm_grade, u) * (100 - current.review_percentage) / 100.0
+        grade += current.MAX_GRADE * util.get_or_0(user_to_accuracy, u) * current.review_percentage / 100.0
         user_to_final_grade[u] = grade
     return user_to_final_grade
 
 
-def rank_by_grades(venue_id, num_rep_sys_iter=10,
-                   run_id='exp', publish=False,
-                   cost_type='linear', pos_slope=1.0, neg_slope=4.0,
-                   normalize=True, normalization_scale=1.0,
-                   use_submission_rank_for_reputation=True,
-                   submission_rank_exponent=1.0):
+def rank_by_grades(venue_id, run_id='exp', publish=False):
     """ Ranking with grades by minimizing global cost function.
     Argumetns:
-        - num_rep_sys_iter - number of iterations in the reputaion system.
+        - current.num_iterations - number of iterations in the reputaion system.
         - run_id - will be written to the field db.grades_exp.run_id
         - publish is a flag whether we should write result to db.grades or not.
         - normalize is a boolean whether we need to normalize difference between
@@ -614,17 +595,16 @@ def rank_by_grades(venue_id, num_rep_sys_iter=10,
     logger.info("Computation of Crowdgrades has started.")
     (D, delta_vec, subm_id_to_user, user_to_bin_compar_idx_list, idx_to_subm_id,
         avrg_grades, user_to_n_graded_tasks, user_to_n_completed_tasks,
-        user_to_grades_dict, venue_row) = read_db_for_ranking_by_grades(venue_id,
-        normalize=normalize, normalization_scale=normalization_scale)
+        user_to_grades_dict, venue_row) = read_db_for_ranking_by_grades(venue_id)
     if D.shape[0] == 0:
         # There are no comparisons in the db.
         logger.info("There are no comparisons in the db.")
         return
-    objective = MinimizationObjective(D, delta_vec, cost_type=cost_type, pos_slope=pos_slope, neg_slope=neg_slope)
+    objective = MinimizationObjective(D, delta_vec)
     num_compar, num_sumb = D.shape
     x_optimal = np.zeros(num_sumb) + 1
     r = np.zeros(num_compar) + 1
-    for it in xrange(num_rep_sys_iter):
+    for it in xrange(current.num_iterations):
         x_0 = x_optimal.copy()
         q = objective.get_Q(r)
         grad_q = objective.get_grad_Q(r)
@@ -656,19 +636,12 @@ def rank_by_grades(venue_id, num_rep_sys_iter=10,
                                                 accuracy_type='stdev_diff',
                                                 map_stdev_to_accuracy=map_stdev_to_accuracy)
         r, _ , user_to_rep = compute_reputation(
-            f, user_to_subm_perc, 
-            user_to_bin_compar_idx_list, subm_id_to_user, idx_to_subm_id,
-            use_submission_rank_for_reputation=use_submission_rank_for_reputation,
-            submission_rank_exponent=submission_rank_exponent)
+            f, user_to_subm_perc, user_to_accuracy,
+            user_to_bin_compar_idx_list, subm_id_to_user, idx_to_subm_id)
         current.logger.info("Completed iteration %d" % it)
     # Okay, now we build dictionaries for writing to the db.
     user_to_accuracy_perc = compute_percentile(user_to_accuracy)
-    reviews_as_percentage = venue_row.reviews_as_percentage_of_grade
-    if reviews_as_percentage is None:
-        reviews_as_percentage = current.ALGO_DEFAULT_REVIEWS_AS_PERCENTAGE
-    user_to_final_grade = compute_final_grades(user_to_subm_grade,
-                                               user_to_accuracy,
-                                               reviews_as_percentage)
+    user_to_final_grade = compute_final_grades(user_to_subm_grade, user_to_accuracy)
     user_to_final_grade_perc = compute_percentile(user_to_final_grade)
     # Writting to the db.
     logger.info("Writing Crowdgrades to the db.")
