@@ -5,6 +5,7 @@ import util
 import gluon.contrib.simplejson as simplejson
 from datetime import datetime
 import evaluation
+import json
 
 @auth.requires_signature()
 def download_research_data():
@@ -130,4 +131,43 @@ def evaluate_grades():
     else:
         return dict(form=form, venue_link=venue_link)
     
+    
+@auth.requires_signature()
+def rerun_evaluations():
+    """Evaluates various grading schemes wrt. the assumed truth of the reference grades."""
+    c = db.venue(request.args(0))
+    cid = c.id
+    venue_link = A(T('Return to grades'), _href=URL('ranking', 'view_grades', args=[cid]))
+    rows = db(db.grades_exp.venue_id == c.id).select(db.grades_exp.run_id, distinct=True)
+    experiment_list = [r.run_id for r in rows]
+    # Produces a multiple-choice form, indicating which results one wants to display.
+    form = SQLFORM.factory(
+        Field('run_ids', 'list:string', requires=IS_IN_SET(experiment_list, multiple=True)),
+        )
+    if form.process().accepted:
+        from google.appengine.api import taskqueue
+        run_ids = form.vars.run_ids
+        for run_id in run_ids:
+            r = db((db.run_parameters.venue_id == cid) & 
+                   (db.run_parameters.run_id == run_id)).select().first()
+            if r is not None:
+                try:
+                    params = json.loads(r.params)
+                    publish = params[REPUTATION_SYSTEM_PUBLISH]
+                    if publish == 'None' or publish == 'False':
+                        # We only re-run unpublished runs.
+                        q = taskqueue.Queue(REPUTATION_SYSTEM_QUEUE)
+                        t = taskqueue.Task(
+                            url = REPUTATION_SYSTEM_RUN_URL,
+                            params = params
+                            )
+                        q.add(t)
+                        logger.info("Enqueued evaluation %r" % run_id)
+                except Exception, e:
+                    logger.warning("Something went wrong enqueuing an eval request: %r" % e)
+        session.flash = T('The requests have been enqueued')
+        return redirect(URL('ranking', 'view_grades', args=[cid]))
+    return dict(form=form, venue_link=venue_link)
 
+                   
+    

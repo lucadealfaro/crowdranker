@@ -174,8 +174,12 @@ def view_grades():
                            _href=URL('research', 'download_research_data.csv', args=[c.id], 
                                      vars=dict(run_ids=request.vars.run_ids),
                                      user_signature=True)))
+    if is_user_admin():
         link_list.append(A(T('Evaluate grades'),
                            _href=URL('research', 'evaluate_grades', args=[c.id],
+                                     user_signature=True)))
+        link_list.append(A(T('Rerun evaluations'),
+                           _href=URL('research', 'rerun_evaluations', args=[c.id],
                                      user_signature=True)))
     # Chooses the display fields.
     display_fields = [

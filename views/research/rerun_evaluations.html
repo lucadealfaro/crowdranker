@@ -1,0 +1,10 @@
+{{extend 'layout.html'}}
+
+<h1>Rerun Evaluations</h1>
+
+{{=form}}
+<p>{{=venue_link}}</p>
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}
