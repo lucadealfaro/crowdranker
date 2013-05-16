@@ -64,6 +64,23 @@ def grade_score(grades1, grades2):
     return 1.0 - s / (2.0 ** 0.5)
 
 
+def grade_correlation(grades1, grades2):
+    """Computes the correlation between two gradings."""
+    # First, we compute the common ids.
+    id1 = [id for score, id in grades1 if score is not None]
+    id2 = [id for score, id in grades2 if score is not None]
+    ids = [id for id in id1 if id in id2]
+    # Then, we compute mappings of ids to grades.
+    map1 = dict([(id, g) for g, id in grades1])
+    map2 = dict([(id, g) for g, id in grades2])
+    # Finally, arrays of grades.
+    a1 = N.array([map1[id] for id in ids])
+    a2 = N.array([map2[id] for id in ids])
+    if a1.size < 2:
+        return 0.0
+    return N.corrcoef(a1, a2)[0, 1]
+
+
 def grade_norm2(grades1, grades2):
     """Computes the norm-2 distance between the two sets of
     grades.  This makes sense of course only if grading out of 10."""

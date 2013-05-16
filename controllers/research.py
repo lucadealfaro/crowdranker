@@ -95,12 +95,15 @@ def evaluate_grades():
     kt = {}
     s_score = {}
     norm2 = {}
+    s_corr = {}
     kt['default'] = evaluation.kendall_tau(grades[True], grades['default'])
     s_score['default'] = evaluation.grade_score(grades[True], grades['default'])
+    s_corr['default'] = evaluation.grade_correlation(grades[True], grades['default'])
     norm2['default'] = evaluation.grade_norm2(grades[True], grades['default'])
     for rid in run_ids:
         kt[rid] = evaluation.kendall_tau(grades[True], grades[rid])
         s_score[rid] = evaluation.grade_score(grades[True], grades[rid])
+        s_corr[rid] = evaluation.grade_correlation(grades[True], grades[rid])
         norm2[rid] = evaluation.grade_norm2(grades[True], grades[rid])
     all_runs = run_ids + ['default']
     # Reads the run information for the various runs.
@@ -115,5 +118,5 @@ def evaluate_grades():
     # Voila.
     venue_link = A(T('Return to grades'), _href=URL('ranking', 'view_grades', 
                                                     args=[cid], vars={'run_ids': request.vars.run_ids}))
-    return dict(run_ids=all_runs, kt=kt, s_score=s_score, norm2=norm2,
+    return dict(run_ids=all_runs, kt=kt, s_score=s_score, s_corr=s_corr, norm2=norm2,
                 run_info=run_info, venue_link = venue_link)

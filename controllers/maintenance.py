@@ -272,3 +272,27 @@ def set_default_venue_reviews_as_percentage_of_grade():
     db.commit()
     session.flash = T('done')
     redirect(URL('default', 'index'))
+
+@auth.requires_login()
+def fix_evaluation_params():
+    def fix(params):
+        try:
+            if len(params) > 10 and params[:8] == "<Storage":
+                ps = params[8:-1].replace("'", '"')
+                pj = simplejson.loads(ps)
+                return simplejson.dumps(pj)
+            else:
+                return params
+        except Exception, e:
+            logging.info("Exception: %r" % e)
+            return params
+    if not is_user_admin():
+        session.flash = T('Not authorized')
+        redirect(URL('default', 'index'))
+    rows = db().select(db.run_parameters.ALL)
+    for r in rows:
+        r.update_record(params = fix(r.params))
+    db.commit()
+    session.flash = T('done')
+    redirect(URL('default', 'index'))
+    

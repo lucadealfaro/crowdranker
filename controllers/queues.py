@@ -3,6 +3,7 @@
 import access
 import ranker
 import grades_rank
+import json
 
 @auth.requires_signature()
 def run_rep_sys():
@@ -82,7 +83,7 @@ def run_rep_sys():
         (db.run_parameters.venue_id == c.id) & (db.run_parameters.run_id == run_id),
         venue_id = c.id, 
         run_id = run_id,
-        params = repr(request.vars))
+        params = json.dumps(request.vars))
     
     if algo == ALGO_OPT:
         grades_rank.rank_by_grades(c.id, run_id=run_id, publish=publish)
