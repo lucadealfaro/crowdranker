@@ -525,6 +525,47 @@ def get_accuracy_using_stdev(subm_id_to_subm_grade, user_to_grades_dict,
     return r, user_to_accuracy
 
 
+def get_accuracy_using_correlation(subm_id_to_subm_grade, user_to_grades_dict,
+                 user_to_bin_compar_idx_list, f, num_subm_per_reviewer):
+    """ Returns vector r and a dictionary user -> accuracy.
+    Vector r is such that author of i-th binary comparison (i-th row of
+    matrix D) has accuracy r_i.
+    Arguments:
+        - f is a cost vector such that i-th binary comparison (g1 - g2)
+        induce cost f[i].
+        - accuracy_type can be
+            "stedv1" - computes avrg(x_i - g_i)**2
+            "stdev2" - computes avrg((x_i - avrg(x_i)) - (g_i - avrg(g_i)))**2
+            "stdev3" - normalizes x and g (function normalize_vec) and
+                then computes avrg(x_i - g_i)
+            "stdev_diff" first normalizes x and g then computes s = stdev(x -g),
+                final accuracy is max(0, 1 - s/sqrt(2)) * min(k, n)/k, where
+                k - number of reviewes a user is supposed to do
+                n - number of reviewes a user has graded
+    """
+    user_to_accuracy = {}
+    r = np.zeros(f.shape[0])
+    for u, subm_id_to_grade in user_to_grades_dict.iteritems():
+        # x is a vector of sumbission grades by our main algorithm.
+        # g is a vector of sumbission grades by the user u.
+        x = np.zeros(len(subm_id_to_grade))
+        g = np.zeros(len(subm_id_to_grade))
+        idx = 0
+        for subm_id, grade in subm_id_to_grade.iteritems():
+            x[idx] = grade
+            g[idx] = subm_id_to_subm_grade[subm_id]
+            idx += 1
+        # Here we compute the correlation between x and g.
+        corr = max(0.0, np.corrcoef(x, g)[0, 1])
+        n = len(user_to_grades_dict[u])
+        accuracy = max(0.0, corr * min(n, num_subm_per_reviewer) / float(num_subm_per_reviewer))
+        user_to_accuracy[u] = accuracy
+        # Computing vector r
+        for idx in user_to_bin_compar_idx_list[u]:
+            r[idx] = user_to_accuracy[u]
+    return r, user_to_accuracy
+
+
 def stretch_grades(x, g, rep_vec=None):
     """ The method returns vector y, such that y_i = ax_i + b, where
     a, b = argmin rep_vec_i * (sum_i ax_i + b - g_i) ** 2.
@@ -627,14 +668,12 @@ def rank_by_grades(venue_id, run_id='exp', publish=False):
 
         # We compute both accuracy, and reputation.  We can experiment with which one
         # is most helpful for the ranking.
-        accuracy, user_to_accuracy = get_accuracy_using_stdev(
+        accuracy, user_to_accuracy = get_accuracy_using_correlation(
                                                 subm_id_to_subm_grade,
                                                 user_to_grades_dict,
                                                 user_to_bin_compar_idx_list,
                                                 f,
-                                                venue_row.number_of_submissions_per_reviewer,
-                                                accuracy_type='stdev_diff',
-                                                map_stdev_to_accuracy=map_stdev_to_accuracy)
+                                                venue_row.number_of_submissions_per_reviewer)
         r, _ , user_to_rep = compute_reputation(
             f, user_to_subm_perc, user_to_accuracy,
             user_to_bin_compar_idx_list, subm_id_to_user, idx_to_subm_id)
