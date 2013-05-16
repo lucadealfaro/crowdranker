@@ -176,7 +176,6 @@ def view_grades():
                                      user_signature=True)))
         link_list.append(A(T('Evaluate grades'),
                            _href=URL('research', 'evaluate_grades', args=[c.id],
-                                     vars=dict(run_ids=request.vars.run_ids),
                                      user_signature=True)))
     # Chooses the display fields.
     display_fields = [

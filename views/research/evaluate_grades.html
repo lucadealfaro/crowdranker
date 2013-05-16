@@ -2,6 +2,9 @@
 
 <h1>Grades evaluation</h1>
 
+{{if form:}}
+{{=form}}
+{{else:}}
 <table>
 <tr><th>Run</th><th>KT</th><th>s-coeff</th><th>corr</th><th>norm2</th><th>Info</th></tr>
 {{for rid in run_ids:}}
@@ -15,6 +18,7 @@
   </tr>
 {{pass}}
 </table>
+{{pass}}
 
 <p>{{=venue_link}}</p>
 

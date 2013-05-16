@@ -74,49 +74,60 @@ def download_research_data():
 @auth.requires_signature()
 def evaluate_grades():
     """Evaluates various grading schemes wrt. the assumed truth of the reference grades."""
-    cid = request.args(0)
-    run_ids = request.vars.run_ids.split(',')
-    # Reads the grades.
-    grades_table = db(db.grades.venue_id == cid).select().as_list()
-    # Reads the various experimental runs.
-    experimental_runs = {}
-    for rid in run_ids:
-        experimental_runs[rid] = db((db.grades_exp.venue_id == cid) &
-                                    (db.grades_exp.run_id == rid)).select().as_list()
-    # Filter all of these lists, so that only the users who also have a reference
-    # grade are kept.
-    known_users = [x['user'] for x in grades_table if x['submission_control_grade'] is not None]
-    grades = {}
-    grades['default'] = [(x['submission_grade'], x['user'])  for x in grades_table if x['user'] in known_users]
-    grades[True] = [(x['submission_control_grade'], x['user']) for x in grades_table if x['user'] in known_users]
-    for rid in run_ids:
-        grades[rid] = [(x['subm_grade'], x['user']) for x in experimental_runs[rid] if x['user'] in known_users]
-    # Computes the qualities of the various runs.
-    kt = {}
-    s_score = {}
-    norm2 = {}
-    s_corr = {}
-    kt['default'] = evaluation.kendall_tau(grades[True], grades['default'])
-    s_score['default'] = evaluation.grade_score(grades[True], grades['default'])
-    s_corr['default'] = evaluation.grade_correlation(grades[True], grades['default'])
-    norm2['default'] = evaluation.grade_norm2(grades[True], grades['default'])
-    for rid in run_ids:
-        kt[rid] = evaluation.kendall_tau(grades[True], grades[rid])
-        s_score[rid] = evaluation.grade_score(grades[True], grades[rid])
-        s_corr[rid] = evaluation.grade_correlation(grades[True], grades[rid])
-        norm2[rid] = evaluation.grade_norm2(grades[True], grades[rid])
-    all_runs = run_ids + ['default']
-    # Reads the run information for the various runs.
-    run_info = {}
-    for rid in all_runs:
-        info = db((db.run_parameters.venue_id == cid) &
-                  (db.run_parameters.run_id == rid)).select().first()
-        if info is None:
-            run_info[rid] = None
-        else:
-            run_info[rid] = "Date: %s Parameters: %r" % (info.date.isoformat(), info.params)
-    # Voila.
-    venue_link = A(T('Return to grades'), _href=URL('ranking', 'view_grades', 
-                                                    args=[cid], vars={'run_ids': request.vars.run_ids}))
-    return dict(run_ids=all_runs, kt=kt, s_score=s_score, s_corr=s_corr, norm2=norm2,
-                run_info=run_info, venue_link = venue_link)
+    c = db.venue(request.args(0))
+    cid = c.id
+    venue_link = A(T('Return to grades'), _href=URL('ranking', 'view_grades', args=[cid]))
+    rows = db(db.grades_exp.venue_id == c.id).select(db.grades_exp.run_id, distinct=True)
+    experiment_list = [r.run_id for r in rows]
+    # Produces a multiple-choice form, indicating which results one wants to display.
+    form = SQLFORM.factory(
+        Field('run_ids', 'list:string', requires=IS_IN_SET(experiment_list, multiple=True)),
+        )
+    if form.process().accepted:
+        run_ids = form.vars.run_ids
+        # Reads the grades.
+        grades_table = db(db.grades.venue_id == cid).select().as_list()
+        # Reads the various experimental runs.
+        experimental_runs = {}
+        for rid in run_ids:
+            experimental_runs[rid] = db((db.grades_exp.venue_id == cid) &
+                                        (db.grades_exp.run_id == rid)).select().as_list()
+        # Filter all of these lists, so that only the users who also have a reference
+        # grade are kept.
+        known_users = [x['user'] for x in grades_table if x['submission_control_grade'] is not None]
+        grades = {}
+        grades['default'] = [(x['submission_grade'], x['user'])  for x in grades_table if x['user'] in known_users]
+        grades[True] = [(x['submission_control_grade'], x['user']) for x in grades_table if x['user'] in known_users]
+        for rid in run_ids:
+            grades[rid] = [(x['subm_grade'], x['user']) for x in experimental_runs[rid] if x['user'] in known_users]
+        # Computes the qualities of the various runs.
+        kt = {}
+        s_score = {}
+        norm2 = {}
+        s_corr = {}
+        kt['default'] = evaluation.kendall_tau(grades[True], grades['default'])
+        s_score['default'] = evaluation.grade_score(grades[True], grades['default'])
+        s_corr['default'] = evaluation.grade_correlation(grades[True], grades['default'])
+        norm2['default'] = evaluation.grade_norm2(grades[True], grades['default'])
+        for rid in run_ids:
+            kt[rid] = evaluation.kendall_tau(grades[True], grades[rid])
+            s_score[rid] = evaluation.grade_score(grades[True], grades[rid])
+            s_corr[rid] = evaluation.grade_correlation(grades[True], grades[rid])
+            norm2[rid] = evaluation.grade_norm2(grades[True], grades[rid])
+        all_runs = run_ids + ['default']
+        # Reads the run information for the various runs.
+        run_info = {}
+        for rid in all_runs:
+            info = db((db.run_parameters.venue_id == cid) &
+                      (db.run_parameters.run_id == rid)).select().first()
+            if info is None:
+                run_info[rid] = None
+            else:
+                run_info[rid] = "Date: %s Parameters: %r" % (info.date.isoformat(), info.params)
+        # Voila.
+        return dict(run_ids=all_runs, kt=kt, s_score=s_score, s_corr=s_corr, norm2=norm2,
+                    run_info=run_info, venue_link = venue_link, form=None)
+    else:
+        return dict(form=form, venue_link=venue_link)
+    
+
