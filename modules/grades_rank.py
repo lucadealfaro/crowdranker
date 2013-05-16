@@ -446,7 +446,7 @@ def compute_reputation(f, user_to_subm_perc, user_to_accuracy,
             mask[idx] = 1
         # Cost is the average cost of the comparisons made by the user.
         if current.reputation_method == 'cost':
-            cost = current.prec_coefficient * np.sum(f * mask) / np.sum(mask)
+            cost = current.prec_coefficient * np.sum(f * mask)
             user_to_rep[user] = 1.0 / (1 + cost)
         else:
             user_to_rep[user] = user_to_accuracy[user] ** current.prec_coefficient
