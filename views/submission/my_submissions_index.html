@@ -1,0 +1,13 @@
+{{extend 'layout.html'}}
+
+<h1>Submissions to {{=venue.name}}</h1>
+
+{{=grid}}
+<br>
+<ul>
+  <li class="btn">{{=A(T('Venue') + ' ' + venue.name, _href=URL('venues', 'view_venue', args=[venue.id]))}}</li>
+</ul>
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

@@ -1,0 +1,27 @@
+{{extend 'layout.html'}}
+
+<h1>{{=venue.name}}</h1>
+
+{{if len(link_list) > 0:}}
+<ul>
+{{for l in link_list:}}
+    <li class="btn">{{=l}}</li>
+{{pass}}
+</ul>
+{{pass}}
+
+<h3>Useful links</h3>
+
+<div><table>
+  <tr><td style="font-weight:bold">Submission link</td><td>:</td>
+  <td><div>{{=A('http://', request.env.http_host, submission_link, _href=submission_link)}}</div></td><td></td></tr>
+  <tr><td style="font-weight:bold">Review link</td><td>:</td>
+  <td><div>{{=A('http://', request.env.http_host, review_link, _href=review_link)}}</div></td><td></td></tr>
+</table></div>
+
+<h3>Assignment details</h3>
+{{=form}}
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

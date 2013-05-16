@@ -1,0 +1,11 @@
+{{extend 'layout.html'}}
+
+<h1>Review Feedback</h1>
+<h4>Assignment : {{=link_to_venue}}</h4>
+{{=link_to_eval}}
+{{=grid}}
+
+{{if request.is_local:}}
+<p></p>
+{{=response.toolbar()}}
+{{pass}}

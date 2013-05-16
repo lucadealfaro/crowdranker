@@ -1,0 +1,56 @@
+{{response.files.append(URL(r=request,c='static',f='js/jquery-ui-1.9.2.custom.min.js'))}}
+{{response.files.append(URL(r=request,c='static',f='css/jquery-ui-1.9.2.custom.css'))}}
+{{extend 'layout.html'}}
+
+<h2>Enter Review for: {{=sub_title}}</h2>
+<style type="text/css">
+    #sortable { margin: 0; padding: 0; width: 60%; }
+    #sortable li { margin: 0 3px 3px 3px; padding: 0.4em; padding-left: 1.5em; font-size: 1.4em; height: 18px; }
+    #sortable li span { position: absolute; margin-left: -1.3em; }
+</style>
+
+<div class="alert alert-info"><i class="icon-info-sign"></i>
+  {{=MARKMIN(general_instructions)}}
+  {{=grading_instructions}}
+</div>
+
+<ol id="item_list">
+{{for key in current_list:}}
+  <li class="ui-state-{{if new_comparison_item == key:}}highlight{{else:}}default{{pass}}" id="item_{{=key}}">
+  <span class="ui-icon ui-icon-arrowthick-2-n-s"></span>
+  {{=submissions[key]}}
+  <span><b>Grade</b> [0 to 10]: <input id="grade_{{=key}}" style="width:40px" value="{{=grades.get(key, '')}}"></input></span>
+  </li>
+{{pass}}
+</ol>
+<br>
+<h4>Comments for {{=sub_title}}</h4>
+{{=form}}
+
+<script>
+$(function() {
+	$("#item_list").sortable();
+	$("form").submit(function() {
+		var new_order = $("#item_list").sortable('toArray');
+		var i = 0;
+		var tmp = "";
+		for (var key in new_order) {
+			var val = new_order[key];
+			var part = val.split("_");
+			if (i > 0) tmp += " ";
+			tmp += part[1]; 	
+			i++;
+		}
+		$("[name='order']").val(tmp);
+		var grades = {};
+		{{for key in current_list:}}
+		grades["{{=key}}"] = $("#grade_{{=key}}").val();
+		{{pass}}
+		$("[name='grades']").val(JSON.stringify(grades));
+	});
+});
+</script>
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

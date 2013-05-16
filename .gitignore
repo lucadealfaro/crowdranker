@@ -1,0 +1,13 @@
+*.1
+.hg*
+.ht/*
+private/*
+progress.log
+cache/*
+databases/*
+errors/*
+sessions/*
+uploads/*
+*.pyc
+*.bak
+

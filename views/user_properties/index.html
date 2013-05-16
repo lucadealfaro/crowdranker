@@ -1,0 +1,6 @@
+{{extend 'layout.html'}}
+<h1>User Properties</h1>
+{{=grid}}
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

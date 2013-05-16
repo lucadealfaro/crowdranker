@@ -1,0 +1,16 @@
+{{extend 'layout.html'}}
+
+<h1>Your assignment was created</h1>
+<p>
+Congratulations!
+Your assignment was created successfully.
+</p>
+
+<br>
+
+<h3>{{=venue.name}}</h3>
+{{=venue_form}}
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

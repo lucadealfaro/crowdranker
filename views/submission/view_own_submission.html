@@ -1,0 +1,29 @@
+{{extend 'layout.html'}}
+
+<h1>Submission</h1>
+
+{{if instructions:}}
+<div class="alert alert-info"><i class="icon-info-sign"></i>
+{{=instructions}}
+</div>
+{{pass}}
+
+{{=form}}
+
+{{if len(warnings) > 0:}}
+<h3>Notice</h3>
+<ul>
+{{for w in warnings:}}
+{{=LI(w)}}
+{{pass}}
+</ul>
+{{pass}}
+<br>
+{{if edit_button:}}
+{{=edit_button}}
+{{pass}}
+
+{{if request.is_local:}}
+<p></p>
+{{=response.toolbar()}}
+{{pass}}

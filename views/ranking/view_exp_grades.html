@@ -1,0 +1,9 @@
+{{extend 'layout.html'}}
+<h1>Select experimental run ids</h1>
+
+<h3>Venue: {{=venue_link}}</h3>
+{{=form}}
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

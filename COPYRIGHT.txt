@@ -1,0 +1,12 @@
+CrowdRanker/CrowdGrader is Copyright of the following contributors:
+
+Main contributors: 
+
+Luca de Alfaro <luca@cs.stanford.edu>, <luca@dealfaro.org>, <luca@ucsc.edu>
+Michael Shavlovsky <mshavlov@ucsc.edu>, <mshavlovsky@gmail.com>
+ 
+Other contributors:
+
+Massimo DiPierro <massimo.dipierro@gmail.com>
+Michael Brich <mbrich@ucsc.edu>
+

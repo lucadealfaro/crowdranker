@@ -1,0 +1,9 @@
+{{extend 'layout.html'}}
+
+<h1>Edit submission feedback</h1>
+
+{{=form}}
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

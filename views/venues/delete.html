@@ -1,0 +1,11 @@
+{{extend 'layout.html'}}
+<h1>Confirm deletion</h1>
+
+<p>If you delete an assignment, <b>all data</b> associated with the assignment 
+will also be deleted.  <b>You cannot undo this!</b></p>
+
+{{=form}}
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

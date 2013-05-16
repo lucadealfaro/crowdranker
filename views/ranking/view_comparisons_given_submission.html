@@ -1,0 +1,16 @@
+{{extend 'layout.html'}}
+
+<h1>Submission Ratings</h1>
+
+<div><table>
+  <tr><td style="font-weight:bold">Submission Author</td><td>:</td>
+  <td><div>{{=A(subm.user, _href=URL('feedback', 'view_feedback', args=['s', subm.id]))}}</div></td><td></td></tr>
+  <tr><td style="font-weight:bold">Assignment</td><td>:</td>
+  <td><div>{{=A(venue.name, _href=URL('venues', 'view_venue', args=[venue.id]))}}</div></td><td></td></tr>
+</table></div>
+
+{{=grid}}
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

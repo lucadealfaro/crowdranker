@@ -1,0 +1,24 @@
+{{extend 'layout.html'}}
+
+<h3>{{=submission_name}}</h3>
+{{=subm_content}}
+
+{{if subm_link:}}
+<h4>Submitted link</h4>
+{{=subm_link}}
+{{pass}}
+
+{{if attachment_link:}}
+<h4>Uploaded file</h4>
+{{=attachment_link}}
+{{pass}}
+
+{{if review_link:}}
+<br>
+<p>{{=review_link}}</p>
+{{pass}}
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}
+

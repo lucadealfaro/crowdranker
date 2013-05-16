@@ -1,0 +1,13 @@
+{{extend 'layout.html'}}
+
+<h1>Review Feedback</h1>
+<p>{{=link_to_submission}}</p>
+<h2>Review</h2>
+{{=review_comments}}
+<h2>Review feedback</h2>
+{{=form}}
+
+{{if request.is_local:}}
+<p></p>
+{{=response.toolbar()}}
+{{pass}}

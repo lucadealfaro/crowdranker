@@ -1,0 +1,5 @@
+{{
+response.headers['Content-Type']='application/vnd.ms-excel'
+response.headers['Content-Disposition'] = "attachment; filename=%s.csv" % filename 
+response.write(stream.getvalue(), escape=False)
+}}

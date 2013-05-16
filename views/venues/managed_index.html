@@ -1,0 +1,9 @@
+{{extend 'layout.html'}}
+
+<h1>Your Assignments</h1>
+<p>{{=A(T('Create a new assignment'), _class='btn', _href=URL('venues', 'edit'))}}</p>
+{{=grid}}
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

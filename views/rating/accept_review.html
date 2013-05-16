@@ -1,0 +1,12 @@
+{{extend 'layout.html'}}
+
+<h1>Accept Review</h1>
+
+<p>Please confirm that you are accepting to review a submission from
+the following venue:</p>
+{{=venue_form}}
+{{=confirmation_form}}
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

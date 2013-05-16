@@ -1,0 +1,25 @@
+{{extend 'layout.html'}}
+
+<h1>Review Details</h1>
+
+<h3>Submission Information</h3>
+<ul>
+<li>Submission by {{=A(subm.user, _href=URL('feedback', 'view_feedback', args=['s', subm_id]))}}
+<li>{{=A(T('View all grades for this submission'),
+        _href=URL('ranking', 'view_comparisons_given_submission', args=[subm_id]))}}
+<li>{{=A(T('View all feedback for this submission'),
+        _href=URL('feedback', 'view_feedback', args=['s', subm_id]))}}
+</ul>
+
+<h3>Review Information</h3>
+{{=task_form}}
+
+{{if user:}}
+<h3>Grades assigned by {{=user}} in this venue</h3>
+{{=comp_form}}
+{{pass}}
+
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

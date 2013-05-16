@@ -1,0 +1,10 @@
+{{extend 'layout.html'}}
+<h1>Edit control grades</h1>
+
+{{=form}}
+
+<p>{{=subm_link}}</p>
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

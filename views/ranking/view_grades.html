@@ -1,0 +1,26 @@
+{{extend 'layout.html'}}
+
+<h1>{{=title}}</h1>
+
+{{if len(link_list) > 0:}}
+<ul>
+{{for l in link_list:}}
+    <li class="btn">{{=l}}</li>
+{{pass}}
+</ul>
+{{pass}}
+
+<div><table>
+  <tr><td style="font-weight:bold">{{=T("Grade visibility")}}</td><td>:</td>
+  <td><div>{{=grades_visibility}}</div></td></tr>
+  <tr><td style="font-weight:bold">{{=T("Last computed on")}}</td><td>:</td>
+  <td><div>{{=grades_date_info}}</div></td></tr>
+</table></div>
+
+{{=grid}}
+
+<p>{{=T('Crowd-grades last computed on:')}} {{=grades_date_info}}</p>
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

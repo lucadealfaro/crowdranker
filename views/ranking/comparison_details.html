@@ -1,0 +1,14 @@
+{{extend 'layout.html'}}
+
+<h1>Comparison details</h1>
+
+<ul>
+  {{for i in comp.ordering:}}
+  <li> Id {{=i}} received a grade of: {{=grades[str(int(i))]}}</li>
+  {{pass}}
+</ul>
+{{=A(T('Back'), URL('ranking', 'view_comparisons_index', args=[comp.venue_id]))}}
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

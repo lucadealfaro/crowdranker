@@ -1,0 +1,13 @@
+{{extend 'layout.html'}}
+<h1>{{=title}}</h1>
+
+{{if message:}}
+  <div class="alert alert-info"><i class="icon-info-sign"></i>
+  {{=message}}
+  </div>
+{{pass}}
+
+{{=form}}
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

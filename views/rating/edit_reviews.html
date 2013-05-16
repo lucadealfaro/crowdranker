@@ -1,0 +1,11 @@
+{{extend 'layout.html'}}
+
+<h1>Reviews</h1>
+
+<h4>Assignment : {{=A(venue.name, _href=URL('venues', 'view_venue', args=[venue.id]))}}</h4>
+
+{{=grid}}
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

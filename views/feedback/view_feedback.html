@@ -1,0 +1,109 @@
+{{extend 'layout.html'}}
+
+<h1>Submission Feedback</h1>
+<br/>
+<div><table>
+<tr><th colspan=4 style="font-weight:bold;background:#dddddd;">General Information</th></tr>
+  <tr><td style="font-weight:bold">Assignment</td><td>:</td>
+  <td><div>{{=venue_link}}</div></td><td></td></tr>
+  <tr><td style="font-weight:bold">Author</td><td>:</td>
+  <td><div>{{=username}}</div></td><td></td></tr>
+{{if subm is not None:}}
+  <tr><td style="font-weight:bold">Date Created</td><td>:</td>
+  <td><div>{{=subm.date_created}} UTC</div></td><td></td></tr>
+  <tr><td style="font-weight:bold">Date Updated</td><td>:</td>
+  <td><div>{{=subm.date_updated}} UTC</div></td><td></td></tr>
+{{pass}}
+
+{{if submission_grade or submission_percentile:}}
+<tr><th colspan=4 style="font-weight:bold;background:#dddddd;">Submission</th></tr>
+{{if submission_grade:}}
+  <tr><td style="font-weight:bold">Grade</td><td>:</td>
+  <td><div>{{=submission_grade}}{{if ranking_link:}} ({{=ranking_link}}){{pass}}</div></td><td>[0...{{=MAX_GRADE}}]</td></tr>
+{{pass}}  
+{{if submission_percentile:}}
+  <tr><td style="font-weight:bold">Percentile</td><td>:</td>
+  <td><div>{{=submission_percentile}}
+  </div></td><td></td></tr>
+{{pass}}
+{{pass}}
+
+{{if review_grade or review_percentile:}}
+<tr><th colspan=4 style="font-weight:bold;background:#dddddd;">Reviews</th></tr>
+{{if review_grade:}}
+  <tr><td style="font-weight:bold">Grade</td><td>:</td>
+  <td><div>{{=review_grade}}{{if reviews_link:}} ({{=reviews_link}}){{pass}}
+  </div></td><td>[0...{{=MAX_GRADE}}]</td></tr>
+{{pass}}  
+{{if review_percentile:}}
+  <tr><td style="font-weight:bold">Percentile</td><td>:</td>
+  <td><div>{{=review_percentile}}</div></td><td></td></tr>
+{{pass}}
+{{if is_admin and user_reputation:}}
+  <tr><td style="font-weight:bold">Reputation</td><td>:</td>
+  <td><div>{{=user_reputation}}</div></td><td></td></tr>
+{{pass}}
+{{pass}}
+
+{{if final_grade or final_percentile or assigned_grade:}}
+<tr><th colspan=4 style="font-weight:bold;background:#dddddd;">Overall assignment</th></tr>
+{{if final_grade:}}
+  <tr><td style="font-weight:bold">Grade</td><td>:</td>
+  <td><div>{{=final_grade}}</div></td><td>[0...{{=MAX_GRADE}}]</td></tr>
+{{pass}}  
+{{if final_percentile:}}
+  <tr><td style="font-weight:bold">Percentile</td><td>:</td>
+  <td><div>{{=final_percentile}}</div></td><td></td></tr>
+{{pass}}  
+{{if assigned_grade:}}
+  <tr><td style="font-weight:bold">Instructor-assigned grade</td><td>:</td>
+  <td><div>{{=assigned_grade}}</div></td><td></td></tr>
+{{pass}}  
+{{pass}}
+
+{{if subm is not None:}}  
+  <tr><th colspan=4 style="font-weight:bold;background:#dddddd;">Number of reviews</th></tr>
+  <tr><td style="font-weight:bold">With grade</td><td>:</td>
+  <td><div>{{=subm.n_completed_reviews}}</div></td><td></td></tr>
+  <tr><td style="font-weight:bold">Without grade</td><td>:</td>
+  <td><div>{{=subm.n_rejected_reviews}}</div></td><td></td></tr>
+{{pass}}
+
+{{ if subm_feedback or edit_feedback_link:}}
+  <tr><th colspan=4 style="font-weight:bold;background:#dddddd;">Feedback from instructor/TA</th></tr>
+  <tr><td colspan=4>
+  {{=subm_feedback}}
+  {{if edit_feedback_link:}}
+	<p>{{=edit_feedback_link}}</p>
+  {{pass}}
+  </td></tr>
+{{pass}}
+
+{{if subm is not None:}}
+  <tr><th colspan=4 style="font-weight:bold;background:#dddddd;">Submission</th></tr>
+  {{ if subm_comment:}}
+  <tr><td colspan=4>
+    <div>{{=subm_comment}}</div>
+  </td></tr>
+  {{pass}}
+  {{if subm_link:}}
+    <tr><td style="font-weight:bold">Submitted link</td><td>:</td>
+    <td><div>{{=subm_link}}</div></td><td></td></tr>
+  {{pass}}
+  {{if subm is not None and subm.content:}}
+  <tr><td colspan=4>
+    {{=download_link}}
+  </td></tr>
+  {{pass}}
+{{pass}}
+
+</table></div>
+
+{{if subm is not None:}}
+  <h3>Review details</h3>
+  {{=grid}}
+{{pass}}
+
+{{if request.is_local:}}
+  {{=response.toolbar()}}
+{{pass}}

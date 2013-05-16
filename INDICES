@@ -1,0 +1,35 @@
+# comparison
+create index index_venue_user on comparison(venue_id, user);
+
+# grades
+create index venue_user_index on grades(venue_id, user);
+create index venue_perc_index on grades(venue_id, submission_percentile);
+create index venue_accuracy_index on grades(venue_id, accuracy);
+create index venue_reputation_index on grades(venue_id, reputation);
+create index venue_percentile_index on grades(venue_id, percentile);
+create index user_index on grades(user);
+
+#submission
+create index venue_user_index on submission(venue_id, user);
+create index venue_percentile_index on submission(venue_id, percentile);
+create index user_index on submission(user);
+
+# user_properties
+create index user_index on user_properties(user);
+
+# task
+create index venue_user_index on task(venue_id, user);
+create index task_user_venue on task(user, venue_id);
+create index user_index on task(user)
+
+# venue
+create index created_index on venue(creation_date);
+create index active_index on venue(is_active);
+create index approved_index on venue(is_approved);
+
+# grades_exp
+create index venue_run_grades_index on grades_exp(venue_id, run_id);
+
+# run_parameters
+create index venue_run_params_index on run_parameters(venue_id, run_id);
+

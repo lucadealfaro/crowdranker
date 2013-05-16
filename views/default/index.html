@@ -1,0 +1,58 @@
+{{extend 'layout.html'}}
+
+<h1>Welcome!</h1>
+
+<p><b>CrowdGrader</b> lets students submit and collaboratively grade their solutions to 
+homework assignments.</p>
+<table>
+<tr><td>
+<h3>For Students</h3>
+<ul>
+{{=LI(B('Submit your solutions:'))}}
+<ul>
+{{=LI(A('Submit your solutions', _href=URL('venues', 'subopen_index')))}}
+{{=LI(A('View your submissions', _href=URL('feedback', 'index', args=['all'])))}}
+</ul>
+{{=LI(B('Review submissions by other students:'))}}
+<ul>
+{{=LI(A('Assignments to review', _href=URL('venues', 'reviewing_duties')))}}
+{{=LI(A('Enter your reviews', _href=URL('rating', 'task_index')))}}
+{{=LI(A('Your completed reviews', _href=URL('rating', 'review_index')))}}
+</ul>
+{{=LI(B('View feedback:'))}}
+<ul>
+{{=LI(A('Your submissions', _href=URL('feedback', 'index', args=['all'])))}}
+{{=LI(A('Your reviews', _href=URL('rating', 'review_index')))}}
+</ul>
+</ul>
+</td><td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td><td>
+<h3>For Teachers</h3>
+<ul>
+{{=LI(B('Manage your student lists:'))}}
+<ul>
+{{=LI(A('Create and manage your lists of students', _href=URL('user_lists', 'index')))}}
+</ul>
+{{=LI(B('Manage your assignments:'))}}
+<ul>
+{{=LI(A('Create a new assignment', _href=URL('venues', 'edit')))}}
+{{=LI(A('View your active assignments', _href=URL('venues', 'managed_index')))}}
+{{=LI(A('View all your assignments (including inactive ones)', 
+        _href=URL('venues', 'managed_index', vars=dict(all='yes'))))}}
+</ul>
+</ul>
+
+<h3>For TAs</h3>
+<ul>
+{{=LI(A('View your assignments', _href=URL('venues', 'observed_index')))}}
+</ul>
+</td></tr>
+</table>
+
+<br>
+<p>To access most functions, you need to be logged in via the Google Account
+that your school or instructor specified.</p>
+
+{{if request.is_local:}}
+<br>
+{{=response.toolbar()}}
+{{pass}}

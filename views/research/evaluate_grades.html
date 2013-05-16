@@ -1,0 +1,22 @@
+{{extend 'layout.html'}}
+
+<h1>Grades evaluation</h1>
+
+<table>
+<tr><th>Run</th><th>KT</th><th>s-coeff</th><th>norm2</th><th>Info</th></tr>
+{{for rid in run_ids:}}
+  <tr>
+    <td>{{=rid}}</td>
+    <td>{{=kt[rid]}}</td>
+    <td>{{=s_score[rid]}}</td>
+    <td>{{=norm2[rid]}}</td>
+    <td>{{=run_info[rid]}}</td>
+  </tr>
+{{pass}}
+</table>
+
+<p>{{=venue_link}}</p>
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}

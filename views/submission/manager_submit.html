@@ -1,0 +1,17 @@
+{{extend 'layout.html'}}
+
+<h1>Add submission</h1>
+
+{{if instructions:}}
+<div class="alert alert-info"><i class="icon-info-sign"></i>
+{{=instructions}}
+</div>
+{{pass}}
+
+<p>Venue : {{=A(T('Assignment') + ' ' + venue.name, _href=URL('venues', 'view_venue', args=[venue.id]))}}
+
+{{=form}}
+
+{{if request.is_local:}}
+{{=response.toolbar()}}
+{{pass}}
