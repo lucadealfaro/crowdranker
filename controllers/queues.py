@@ -16,11 +16,11 @@ def run_rep_sys():
         current.num_iterations = int(request.vars[REPUTATION_SYSTEM_PARAM_NUM_ITERATIONS])
     except Exception:
         logger.warning("Missing number of iterations in specification.")
-        current.num_iterations = 4
+        current.num_iterations = ALGO_DEFAULT_NUM_ITERATIONS
     try:
         current.review_percentage = float(request.vars[REPUTATION_SYSTEM_PARAM_REVIEW_PERCENTAGE])
     except Exception:
-        current.review_percentage = 25
+        current.review_percentage = ALGO_DEFAULT_REVIEWS_AS_PERCENTAGE
     startover = False
     try:
         startover = request.vars[REPUTATION_SYSTEM_STARTOVER] == 'True'
@@ -59,8 +59,6 @@ def run_rep_sys():
     except Exception:
         current.prec_coefficient = ALGO_DEFAULT_PREC_COEFF
     
-    # Fix
-    current.cost_coefficient = 1.0
     logger.info("Reputation system request: %r" % request.vars)
     logger.info("Starting reputation system run for venue: " + c.name)
     logger.info("Requested number of iterations: %d" % current.num_iterations)
