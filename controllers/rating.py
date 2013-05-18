@@ -531,6 +531,7 @@ def crowd_grade():
             Field('precision_coefficient', 'double', default=ALGO_DEFAULT_PREC_COEFF, requires=IS_FLOAT_IN_RANGE(0.0, 1000.0)),
             Field('use_submission_rank_in_reputation', 'boolean', default=True),
             Field('submission_rank_exponent_for_reputation', 'double', default=ALGO_DEFAULT_RANK_REP_EXP, requires=IS_FLOAT_IN_RANGE(0.1, 10.0)),
+            Field('precision_method', default=ALGO_DEFAULT_PREC_METHOD, requires=IS_IN_SET([ALGO_PREC_METHOD_DIST, ALGO_PREC_METHOD_CORR])),
             Field('num_iterations', 'integer', default=ALGO_DEFAULT_NUM_ITERATIONS, requires=IS_INT_IN_RANGE(1, 20)),
             Field('publish', 'boolean', default=False, writable=access.is_real_manager(c, props)),
             )
@@ -553,6 +554,7 @@ def crowd_grade():
             precision_coefficient = form.vars.precision_coefficient
             use_submission_rank_in_reputation = form.vars.use_submission_rank_in_reputation
             submission_rank_exp = form.vars.submission_rank_exponent_for_reputation
+            precision_method = form.vars.precision_method
             num_iterations = form.vars.num_iterations
             publish = form.vars.publish
         else:            
@@ -567,6 +569,7 @@ def crowd_grade():
             precision_coefficient = ALGO_DEFAULT_PREC_COEFF
             use_submission_rank_in_reputation = True
             submission_rank_exp = ALGO_DEFAULT_RANK_REP_EXP
+            precision_method = ALGO_DEFAULT_PREC_METHOD
             num_iterations = ALGO_DEFAULT_NUM_ITERATIONS
             publish = True
         # Performs the computation.
@@ -584,6 +587,7 @@ def crowd_grade():
                     REPUTATION_SYSTEM_PARAM_REVIEW_PERCENTAGE: c.reviews_as_percentage_of_grade,
                     REPUTATION_SYSTEM_USE_SUBMISSION_RANK_IN_REP: use_submission_rank_in_reputation,
                     REPUTATION_SYSTEM_SUBMISSION_RANK_REP_EXP: submission_rank_exp,
+                    REPUTATION_SYSTEM_PREC_METHOD: precision_method,
                     REPUTATION_SYSTEM_PARAM_NUM_ITERATIONS: num_iterations,
                     REPUTATION_SYSTEM_STARTOVER: 'True',
                     REPUTATION_SYSTEM_PUBLISH: publish,

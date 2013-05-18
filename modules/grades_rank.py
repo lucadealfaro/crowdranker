@@ -462,27 +462,24 @@ def compute_reputation(f, user_to_subm_perc, user_to_accuracy,
 
 
 def get_accuracy_using_stdev(subm_id_to_subm_grade, user_to_grades_dict,
-                 user_to_bin_compar_idx_list, f, num_subm_per_reviewer,
-                 accuracy_type="stdev1",
-                 map_stdev_to_accuracy=lambda x, y, z: x):
+                 user_to_bin_compar_idx_list, f, num_subm_per_reviewer):   
     """ Returns vector r and a dictionary user -> accuracy.
     Vector r is such that author of i-th binary comparison (i-th row of
     matrix D) has accuracy r_i.
     Arguments:
         - f is a cost vector such that i-th binary comparison (g1 - g2)
         induce cost f[i].
-        - accuracy_type can be
-            "stedv1" - computes avrg(x_i - g_i)**2
-            "stdev2" - computes avrg((x_i - avrg(x_i)) - (g_i - avrg(g_i)))**2
-            "stdev3" - normalizes x and g (function normalize_vec) and
-                then computes avrg(x_i - g_i)
-            "stdev_diff" first normalizes x and g then computes s = stdev(x -g),
-                final accuracy is max(0, 1 - s/sqrt(2)) * min(k, n)/k, where
-                k - number of reviewes a user is supposed to do
-                n - number of reviewes a user has graded
-        - map_stdev_to_accuracy is a function which calculates accuracy based on user's stdev.
-          map_stdev_to_accuracy(stedv, number_of_reviews)
     """
+    # First, for normalizing the standard deviation, I compute the standard
+    # deviation of the whole set of grades.
+    all_grades_list = []
+    for _, subm_id_to_grade in user_to_grades_dict.iteritems():
+        for _, grade in subm_id_to_grade.iteritems():
+            all_grades_list.append(grade)
+    all_grades = np.array(all_grades_list)
+    global_stdev = np.std(all_grades)
+    # current.logger.info("Global stdev: %r" % global_stdev)
+    
     user_to_accuracy = {}
     r = np.zeros(f.shape[0])
     for u, subm_id_to_grade in user_to_grades_dict.iteritems():
@@ -495,30 +492,22 @@ def get_accuracy_using_stdev(subm_id_to_subm_grade, user_to_grades_dict,
             x[idx] = grade
             g[idx] = subm_id_to_subm_grade[subm_id]
             idx += 1
-        # Here we compute standard deviation between x and g.
-        x_mean = np.mean(x)
-        g_mean = np.mean(g)
-        if accuracy_type == 'stdev1':
-            stdev = np.mean((x - g)**2)
-        elif accuracy_type == 'stdev2':
-            stdev = np.mean(((x - x_mean) - (g - g_mean))**2)
-        elif accuracy_type == 'stdev3':
-            x_1 = normalize_vec(x)
-            g_1 = normalize_vec(g)
-            stdev = np.mean((x_1 - g_1)**2)
-        elif accuracy_type == 'stdev_diff':
-            x_1 = normalize_vec(x)
-            g_1 = normalize_vec(g)
-            s = np.std(x_1 - g_1)
-            n = len(user_to_grades_dict[u])
-            accuracy = (max(0.0, 1.0 - s / (2.0 ** 0.5)) * 
-                        min(n, num_subm_per_reviewer) / float(num_subm_per_reviewer))
-        else:
-            raise Exception("Please specify how to compute accuracy")
-        if accuracy_type in ['stdev1', 'stdev2', 'stdev3']:
-            accuracy = map_stdev_to_accuracy(stdev, len(user_to_grades_dict[u]),
-                                                    num_subm_per_reviewer)
-        user_to_accuracy[u] = accuracy
+        # Once we have x and g, we reason as follows.
+        # A fully random user would have std(x - g) equal to 
+        # sqrt(2) * global_stdev, assuming grades follow
+        # a gaussian distribution.  So, we compute 
+        # 1 - std(x - g) / (sqrt(2) * global_stdev)    
+        # as a figure of merit for the user.
+        # BUT, as a benefit to the user, we first equalize the 
+        # averages.
+        x = x - np.mean(x)
+        g = g - np.mean(g)
+        s = np.std(x - g)
+        # current.logger.info("User %r: stdev is %r" % (u, s))
+        accuracy = max(0.0, 1.0 - s / (global_stdev * 2.0 ** 0.5))
+        # The accuracy takes into account how many reviews have been made.
+        n = len(user_to_grades_dict[u])
+        user_to_accuracy[u] = accuracy * min(n, num_subm_per_reviewer) / float(num_subm_per_reviewer)
         # Computing vector r
         for idx in user_to_bin_compar_idx_list[u]:
             r[idx] = user_to_accuracy[u]
@@ -533,15 +522,6 @@ def get_accuracy_using_correlation(subm_id_to_subm_grade, user_to_grades_dict,
     Arguments:
         - f is a cost vector such that i-th binary comparison (g1 - g2)
         induce cost f[i].
-        - accuracy_type can be
-            "stedv1" - computes avrg(x_i - g_i)**2
-            "stdev2" - computes avrg((x_i - avrg(x_i)) - (g_i - avrg(g_i)))**2
-            "stdev3" - normalizes x and g (function normalize_vec) and
-                then computes avrg(x_i - g_i)
-            "stdev_diff" first normalizes x and g then computes s = stdev(x -g),
-                final accuracy is max(0, 1 - s/sqrt(2)) * min(k, n)/k, where
-                k - number of reviewes a user is supposed to do
-                n - number of reviewes a user has graded
     """
     user_to_accuracy = {}
     r = np.zeros(f.shape[0])
@@ -668,12 +648,20 @@ def rank_by_grades(venue_id, run_id='exp', publish=False):
 
         # We compute both accuracy, and reputation.  We can experiment with which one
         # is most helpful for the ranking.
-        accuracy, user_to_accuracy = get_accuracy_using_correlation(
-                                                subm_id_to_subm_grade,
-                                                user_to_grades_dict,
-                                                user_to_bin_compar_idx_list,
-                                                f,
-                                                venue_row.number_of_submissions_per_reviewer)
+        if current.precision_method == current.ALGO_PREC_METHOD_CORR:
+            accuracy, user_to_accuracy = get_accuracy_using_correlation(
+                subm_id_to_subm_grade,
+                user_to_grades_dict,
+                user_to_bin_compar_idx_list,
+                f,
+                venue_row.number_of_submissions_per_reviewer)
+        else:
+            accuracy, user_to_accuracy = get_accuracy_using_stdev(
+                subm_id_to_subm_grade,
+                user_to_grades_dict,
+                user_to_bin_compar_idx_list,
+                f,
+                venue_row.number_of_submissions_per_reviewer)
         r, _ , user_to_rep = compute_reputation(
             f, user_to_subm_perc, user_to_accuracy,
             user_to_bin_compar_idx_list, subm_id_to_user, idx_to_subm_id)
@@ -695,45 +683,3 @@ def rank_by_grades(venue_id, run_id='exp', publish=False):
                                          publish, run_id)
 
 
-def map_stdev_to_accuracy(stdev, num_compar, num_subm_per_reviewer):
-    """ Calculates reviewer accuracy based on standard deviation of grades.
-    num_compar is number of submission a user has reviewed.
-    """
-    accuracy = 1.0 / (1 + stdev/np.sqrt(min(num_compar, num_subm_per_reviewer)))
-    return accuracy
-
-def normalize_vec(vec):
-    vec_1 = vec - np.mean(vec)
-    vec_1 = vec_1 / np.std(vec_1)
-    return vec_1
-
-
-def get_accuracy_using_dirichlet(f, user_to_bin_compar_idx_list):
-    perc = 0.9
-    user_to_accuracy = {}
-    r = np.zeros(f.shape[0])
-    for u in user_to_bin_compar_idx_list:
-        alpha, beta = 0.01, 0.01
-        delta = 0.001
-        x = np.arange(0 + delta, 1, delta)
-        y = x ** (alpha - 1) * (1 - x) ** (beta - 1)
-        # Updating distribution.
-        for idx in user_to_bin_compar_idx_list[u]:
-            c = 1.0 / (1 + f[idx])
-            y = y * (c * x + (1 - c) * (1 - x))
-            y /= np.sum(y)
-        # Computing 90 percentile.
-        # Integral approximation is based on trapezoidal rule.
-        y1 = y[:-1]
-        y2 = y[1:]
-        integral_vec = (y2 + y1) / 2 * delta
-        integral = np.sum(integral_vec)
-        cumsum = np.cumsum(integral_vec)
-        threshold = (1 - perc) * integral
-        idx = cumsum.searchsorted(threshold)
-        accuracy = idx * delta
-        user_to_accuracy[u] = accuracy
-        # Computing vector r
-        for idx in user_to_bin_compar_idx_list[u]:
-            r[idx] = accuracy
-    return r, user_to_accuracy

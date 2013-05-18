@@ -54,10 +54,17 @@ def run_rep_sys():
         current.submission_rank_exp = ALGO_DEFAULT_RANK_REP_EXP
         
     current.reputation_method = request.vars[REPUTATION_SYSTEM_REPUTATION_METHOD]
+    if current.reputation_method is None:
+        current.reputation_method = ALGO_DEFAULT_REPUTATION_METHOD
+        
     try:
         current.prec_coefficient = float(request.vars[REPUTATION_SYSTEM_PREC_COEFF])
     except Exception:
         current.prec_coefficient = ALGO_DEFAULT_PREC_COEFF
+        
+    current.precision_method = request.vars[REPUTATION_SYSTEM_PREC_METHOD]
+    if current.precision_method is None:
+        current.precision_method = ALGO_DEFAULT_PREC_METHOD
     
     logger.info("Reputation system request: %r" % request.vars)
     logger.info("Starting reputation system run for venue: " + c.name)
