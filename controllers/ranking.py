@@ -108,20 +108,22 @@ def view_grades():
     It takes as single argument the venue id.
     """
     # This function is used to get experimental grades from the db.
-    def get_grade(venue_id, username, run_id):
-        row = db((db.grades_exp.venue_id == venue_id) &
-                 (db.grades_exp.user == username) &
-                 (db.grades_exp.run_id == run_id)).select().first()
-        if row is None:
-            return 'None'
-        # Generates a string summary.
-        s = "subm_grade: %r subm_confidence: %r rev: %r rep: %r tot: %r" % (
-            short_float_or_None(row.subm_grade),
-            short_float_or_None(row.subm_confidence),
-            short_float_or_None(row.review_grade),
-            short_float_or_None(row.reputation),
-            short_float_or_None(row.grade))
-        return s
+    def get_grade_fn(venue_id, run_id):
+        def f(row):
+            row = db((db.grades_exp.venue_id == venue_id) &
+                     (db.grades_exp.user == row.user) &
+                     (db.grades_exp.run_id == run_id)).select().first()
+            if row is None:
+                return 'None'
+            # Generates a string summary.
+            s = "subm_grade: %r subm_confidence: %r rev: %r rep: %r tot: %r" % (
+                short_float_or_None(row.subm_grade),
+                short_float_or_None(row.subm_confidence),
+                short_float_or_None(row.review_grade),
+                short_float_or_None(row.reputation),
+                short_float_or_None(row.grade))
+            return s
+        return f
     
     # Main function.
     c = db.venue(request.args(0)) or redirect(URL('default', 'index'))
@@ -199,7 +201,7 @@ def view_grades():
         for r in run_ids:
             grid_links.append(dict(
                 header = r, 
-                body = lambda row: get_grade(c.id, row.user, r)))
+                body = get_grade_fn(c.id, r)))
     if is_user_admin():
         # Adds a column for the true grade.
         grid_links.append(dict(
