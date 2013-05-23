@@ -61,6 +61,11 @@ def run_rep_sys():
         current.prec_coefficient = float(request.vars[REPUTATION_SYSTEM_PREC_COEFF])
     except Exception:
         current.prec_coefficient = ALGO_DEFAULT_PREC_COEFF
+
+    try:
+        current.matrix_D_type = request.vars[REPUTATION_SYSTEM_MATRIX_D_TYPE]
+    except Exception:
+        current.matrix_D_type = MATRIX_D_TYPE_GRADES_DIST
         
     current.precision_method = request.vars[REPUTATION_SYSTEM_PREC_METHOD]
     if current.precision_method is None:
@@ -82,6 +87,7 @@ def run_rep_sys():
     logger.info("Submission rank exponent for reputation: %r" % current.submission_rank_exp)
     logger.info("Reputation method: %r" % current.reputation_method)
     logger.info("Precision coefficient: %r" % current.prec_coefficient)
+    logger.info("Type of matrix D: %r" % current.matrix_D_type)
     
     # Stores the run parameters.
     db.run_parameters.update_or_insert(

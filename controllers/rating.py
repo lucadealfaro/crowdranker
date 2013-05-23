@@ -532,6 +532,7 @@ def crowd_grade():
             Field('use_submission_rank_in_reputation', 'boolean', default=True),
             Field('submission_rank_exponent_for_reputation', 'double', default=ALGO_DEFAULT_RANK_REP_EXP, requires=IS_FLOAT_IN_RANGE(0.1, 10.0)),
             Field('precision_method', default=ALGO_DEFAULT_PREC_METHOD, requires=IS_IN_SET([ALGO_PREC_METHOD_DIST, ALGO_PREC_METHOD_CORR])),
+            Field('matrix_D_type', default=MATRIX_D_TYPE_GRADES_DIST, requires=IS_IN_SET([MATRIX_D_TYPE_GRADES_DIST, MATRIX_D_TYPE_GRADES_SINGLE])),
             Field('num_iterations', 'integer', default=ALGO_DEFAULT_NUM_ITERATIONS, requires=IS_INT_IN_RANGE(1, 20)),
             Field('publish', 'boolean', default=False, writable=access.is_real_manager(c, props)),
             )
@@ -557,6 +558,7 @@ def crowd_grade():
             precision_method = form.vars.precision_method
             num_iterations = form.vars.num_iterations
             publish = form.vars.publish
+            matrix_D_type = form.vars.matrix_D_type
         else:            
             algo = ALGO_OPT
             run_id = 'default'
@@ -571,6 +573,7 @@ def crowd_grade():
             submission_rank_exp = ALGO_DEFAULT_RANK_REP_EXP
             precision_method = ALGO_DEFAULT_PREC_METHOD
             num_iterations = ALGO_DEFAULT_NUM_ITERATIONS
+            matrix_D_type = MATRIX_D_TYPE_GRADES_DIST
             publish = True
         # Performs the computation.
         return redirect(URL('queues', 'run_rep_sys', vars={
@@ -591,6 +594,7 @@ def crowd_grade():
                     REPUTATION_SYSTEM_PARAM_NUM_ITERATIONS: num_iterations,
                     REPUTATION_SYSTEM_STARTOVER: 'True',
                     REPUTATION_SYSTEM_PUBLISH: publish,
+                    REPUTATION_SYSTEM_MATRIX_D_TYPE: matrix_D_type,
                     },
                     user_signature=True))
     venue_link = A(c.name, _href=URL('venues', 'view_venue', args=[c.id]))

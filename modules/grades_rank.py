@@ -179,13 +179,20 @@ def decode_json_grades(dict_grades_json):
         subm_id_to_grade[s_id] = float(g)
     return subm_id_to_grade
 
-def get_num_rows_of_D(compar_rows):
+def get_num_rows_of_D(compar_rows,
+                      matrix_D_type=current.MATRIX_D_TYPE_GRADES_DIST):
     """Computes number of rows in matrix D."""
     num_rows = 0
-    for r in compar_rows:
-        m = len(util.get_list(r.ordering))
-        if m >= 2:
-            num_rows += (m - 1) * m * 0.5
+    if matrix_D_type == current.MATRIX_D_TYPE_GRADES_DIST:
+        for r in compar_rows:
+            m = len(util.get_list(r.ordering))
+            if m >= 2:
+                num_rows += (m - 1) * m * 0.5
+    else:
+        # compute number of rows for matrix D in case when
+        # main optimization problem has form \sum r c(g - x)
+        for r in compar_rows:
+            num_rows += len(util.get_list(r.ordering))
     return num_rows
 
 
@@ -244,11 +251,19 @@ def get_number_of_tasks(venue_id):
     return user_to_n_completed_tasks, user_to_n_graded_tasks, user_to_n_rejected_tasks
 
 
-def read_db_for_ranking_by_grades(venue_id):
+def read_db_for_ranking_by_grades(venue_id,
+                      matrix_D_type=current.MATRIX_D_TYPE_GRADES_DIST):
     """ The method fills matrix D, vector delta_vec and other containers
     with infrom form the db.
     argument how_to_construct_compar defines how to construct binary
     comparisons out of M-ary comparisons.
+
+    Arguments:
+        - matrix_D_type specifies type of main optimization problem.
+          If the value is "difference_between_grades" then matrix D is build
+          to original approach of optimizing difference between grades.
+          If the value is NOT "difference_between_grades" then matrix D is
+          build for the problem of minimizing \sum r c(g - x).
 
     Method return tuple  (D, delta_vec, subm_id_to_user, user_to_bin_comp_idx_list, idx_to_subm_id, avrg_grades)
     where
@@ -288,7 +303,7 @@ def read_db_for_ranking_by_grades(venue_id):
     idx_to_subm_id = dict((idx, subm_id) for (subm_id, idx) in
                                               subm_id_to_idx.iteritems())
     # Caluculate dimensions if D and length of delta_vec.
-    num_rows = get_num_rows_of_D(rows)
+    num_rows = get_num_rows_of_D(rows, matrix_D_type)
     num_columns = len(subm_id_to_idx)
     current.logger.info("Size of D: %d columns, %d rows" % (num_columns, num_rows))
     D = np.zeros((num_rows, num_columns))
@@ -303,37 +318,52 @@ def read_db_for_ranking_by_grades(venue_id):
         if len(subm_id_to_grade) > 1:
             user_to_grades_dict[r.user] = subm_id_to_grade
         # Filling matrix D and vector delta_vec.
-        normaliz = 1.0
-        if len(ordering) > 1:
-            normaliz = float(subm_id_to_grade[ordering[0]] -
-                             subm_id_to_grade[ordering[-1]])
-        for i in xrange(len(ordering)):
-            if not subm_id_to_idx.has_key(ordering[i]):
-                continue
-            for j in xrange(i + 1, len(ordering), 1):
-                if not subm_id_to_idx.has_key(ordering[j]):
+        if matrix_D_type == current.MATRIX_D_TYPE_GRADES_DIST:
+            normaliz = 1.0
+            if len(ordering) > 1:
+                normaliz = float(subm_id_to_grade[ordering[0]] -
+                                 subm_id_to_grade[ordering[-1]])
+            for i in xrange(len(ordering)):
+                if not subm_id_to_idx.has_key(ordering[i]):
+                    continue
+                for j in xrange(i + 1, len(ordering), 1):
+                    if not subm_id_to_idx.has_key(ordering[j]):
+                        continue
+                    g_i = subm_id_to_grade[ordering[i]]
+                    g_j = subm_id_to_grade[ordering[j]]
+                    #TODO(michael): delete grades comparison later,
+                    # now it is for sanity check.
+                    if g_i < g_j:
+                        raise Exception("Error, grades are in a wrong order!")
+                    idx_i = subm_id_to_idx[ordering[i]]
+                    idx_j = subm_id_to_idx[ordering[j]]
+                    D[idx, idx_i] = 1
+                    D[idx, idx_j] = -1
+                    # Normailzation.
+                    if current.normalize_grades:
+                        delta_vec[idx] = (g_i - g_j) / normaliz
+                        delta_vec[idx] *= current.normalization_scale
+                    else:
+                        delta_vec[idx] = g_i - g_j
+                    if not user_to_bin_comp_idx_list.has_key(r.user):
+                        user_to_bin_comp_idx_list[r.user] = []
+                    user_to_bin_comp_idx_list[r.user].append(idx)
+                    idx += 1
+        else:
+            # Filling matrix D for the case when main problem is \sum r c(g - x)
+            for i in xrange(len(ordering)):
+                if not subm_id_to_idx.has_key(ordering[i]):
                     continue
                 g_i = subm_id_to_grade[ordering[i]]
-                g_j = subm_id_to_grade[ordering[j]]
-                #TODO(michael): delete grades comparison later,
-                # now it is for sanity check.
-                if g_i < g_j:
-                    raise Exception("Error, grades are in a wrong order!")
                 idx_i = subm_id_to_idx[ordering[i]]
-                idx_j = subm_id_to_idx[ordering[j]]
                 D[idx, idx_i] = 1
-                D[idx, idx_j] = -1
-                # Normailzation.
-                if current.normalize_grades:
-                    delta_vec[idx] = (g_i - g_j) / normaliz
-                    delta_vec[idx] *= current.normalization_scale
-                else:
-                    delta_vec[idx] = g_i - g_j
+                # Filling delta_vec.
+                delta_vec[idx] = g_i
                 if not user_to_bin_comp_idx_list.has_key(r.user):
                     user_to_bin_comp_idx_list[r.user] = []
                 user_to_bin_comp_idx_list[r.user].append(idx)
                 idx += 1
-        # Okay, now lets remember grades which was assigned to submissions.
+        # Okay, now lets remember grades which were assigned to submissions.
         for subm_id, grade in subm_id_to_grade.iteritems():
             if not subm_id_to_list_of_grades.has_key(subm_id):
                 subm_id_to_list_of_grades[subm_id] = []
@@ -616,7 +646,7 @@ def rank_by_grades(venue_id, run_id='exp', publish=False):
     logger.info("Computation of Crowdgrades has started.")
     (D, delta_vec, subm_id_to_user, user_to_bin_compar_idx_list, idx_to_subm_id,
         avrg_grades, user_to_n_graded_tasks, user_to_n_completed_tasks,
-        user_to_grades_dict, venue_row) = read_db_for_ranking_by_grades(venue_id)
+        user_to_grades_dict, venue_row) = read_db_for_ranking_by_grades(venue_id, matrix_D_type = current.matrix_D_type)
     if D.shape[0] == 0:
         # There are no comparisons in the db.
         logger.info("There are no comparisons in the db.")
