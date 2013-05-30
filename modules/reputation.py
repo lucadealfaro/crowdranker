@@ -3,7 +3,6 @@
 
 import numpy as np
 import unittest
-from gluon import current
 
 # Basic precision, as multiple of standard deviation.
 BASIC_PRECISION = 0.0001
@@ -40,12 +39,14 @@ class Msg():
 
 class Graph:
     
-    def __init__(self):
+    def __init__(self, use_median=False, do_debias=False):
         
         self.items = []
         self.users = []
         self.user_dict = {}
         self.item_dict = {}
+        self.use_median = use_median
+        self.do_debias = do_debias
         
     def add_review(self, username, item_id, grade):
         # Gets, or creates, the user. 
@@ -99,7 +100,7 @@ class Graph:
             grades = []
             for u in it.users:
                 grades.append(u.grade[it])
-            it.grade = aggregate(grades)
+            it.grade = self.aggregate(grades)
             
     
     def _propagate_from_items(self):
@@ -126,19 +127,8 @@ class Graph:
                 weights /= np.sum(weights)
                 msg = Msg()
                 msg.item = it
-                msg.grade = aggregate(grades, weights=weights)
-                # Now I need to estimate the standard deviation of the grade. 
-                if True:
-                    # This is a way to estimate the variance from the user-declared variances.
-                    msg.variance = np.sum(variances * weights * weights)
-                else:
-                    # This is a way to estimate the variance from the actual data.
-                    diff_list = []
-                    for m in it.msgs:
-                        if m.user != u:
-                            diff_list.append(m.grade - msg.grade)
-                    diff_list = np.array(diff_list)
-                    msg.variance = np.sum(diff_list * diff_list * weights)
+                msg.grade = self.aggregate(grades, weights=weights)
+                msg.variance = np.sum(variances * weights * weights)
                 u.msgs.append(msg)
     
     
@@ -157,14 +147,14 @@ class Graph:
                 msg.user = u
                 biases = []
                 weights = []
-                if current.REPUTATION_SYSTEM_DO_DEBIAS:
+                if self.do_debias:
                     for m in u.msgs:
                         if m.item != it:
                             weights.append(1 / (BASIC_PRECISION + m.variance))
                             given_grade = u.grade[m.item]
                             other_grade = m.grade
                             biases.append(given_grade - other_grade)
-                    u.bias = aggregate(biases, weights=weights)
+                    u.bias = self.aggregate(biases, weights=weights)
                 else:
                     u.bias = 0.0
                 # The grade is the grade given, de-biased. 
@@ -178,7 +168,7 @@ class Graph:
                         it_grade = u.grade[m.item] - u.bias
                         variance_estimates.append((it_grade - m.grade) ** 2.0)
                         weights.append(1.0 / (BASIC_PRECISION + m.variance))
-                msg.variance = aggregate(variance_estimates, weights=weights)
+                msg.variance = self.aggregate(variance_estimates, weights=weights)
                 # The message is ready for enqueuing.
                 it.msgs.append(msg)
                     
@@ -195,7 +185,7 @@ class Graph:
             variances = np.array(variances)
             weights = 1.0 / (BASIC_PRECISION + variances)
             weights /= np.sum(weights)
-            it.grade = aggregate(grades, weights=weights)
+            it.grade = self.aggregate(grades, weights=weights)
             it.variance = np.sum(variances * weights * weights)
     
     
@@ -206,13 +196,13 @@ class Graph:
             biases = []
             weights = []
             # Estimates the bias.
-            if current.REPUTATION_SYSTEM_DO_DEBIAS:
+            if self.do_debias:
                 for m in u.msgs:
                     weights.append(1 / (BASIC_PRECISION + m.variance))
                     given_grade = u.grade[m.item]
                     other_grade = m.grade
                     biases.append(given_grade - other_grade)
-                u.bias = aggregate(biases, weights=weights)
+                u.bias = self.aggregate(biases, weights=weights)
             else:
                 u.bias = 0.0
             # Estimates the grade for each item.
@@ -222,7 +212,7 @@ class Graph:
                 it_grade = u.grade[m.item] - u.bias
                 variance_estimates.append((it_grade - m.grade) ** 2.0)
                 weights.append(1.0 / (BASIC_PRECISION + m.variance))
-            u.variance = aggregate(variance_estimates, weights=weights)
+            u.variance = self.aggregate(variance_estimates, weights=weights)
             
             
     def evaluate_users(self):
@@ -240,18 +230,18 @@ class Graph:
             u.quality = max(0.0, 1.0 - (u.variance ** 0.5) / overall_stdev)
 
 
-def aggregate(v, weights=None):
-    """Aggregates using either average or median."""
-    if current.REPUTATION_SYSTEM_USE_MEDIAN
-        if weights is not None:
-            return median_aggregate(v, weights=weights)
+    def aggregate(self, v, weights=None):
+        """Aggregates using either average or median."""
+        if self.use_median:
+            if weights is not None:
+                return median_aggregate(v, weights=weights)
+            else:
+                return median_aggregate(v)
         else:
-            return median_aggregate(v)
-    else:
-        if weights is not None:
-            return np.average(v, weights=weights)
-        else:
-            return np.average(v)
+            if weights is not None:
+                return np.average(v, weights=weights)
+            else:
+                return np.average(v)
 
 
 def median_aggregate(values, weights=None):

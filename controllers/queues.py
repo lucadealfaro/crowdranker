@@ -70,6 +70,10 @@ def run_rep_sys():
     current.precision_method = request.vars[REPUTATION_SYSTEM_PREC_METHOD]
     if current.precision_method is None:
         current.precision_method = ALGO_DEFAULT_PREC_METHOD
+        
+    # Vancouver.
+    current.vancouver_use_median = request.vars[REPUTATION_SYSTEM_USE_MEDIAN] == 'True'
+    current.vancouver_do_debias = request.vars[REPUTATION_SYSTEM_DO_DEBIAS] == 'True'
     
     logger.info("Reputation system request: %r" % request.vars)
     logger.info("Starting reputation system run for venue: " + c.name)
@@ -86,6 +90,8 @@ def run_rep_sys():
     logger.info("Use submission rank in rep: %r" % current.use_submission_rank_in_rep)
     logger.info("Submission rank exponent for reputation: %r" % current.submission_rank_exp)
     logger.info("Reputation method: %r" % current.reputation_method)
+    logger.info("Vancouver use median: %r" % current.vancouver_use_median)
+    logger.info("Vancouver do debias: %r" % current.vancouver_do_debias)
     logger.info("Precision coefficient: %r" % current.prec_coefficient)
     logger.info("Type of matrix D: %r" % current.matrix_D_type)
     
@@ -99,7 +105,9 @@ def run_rep_sys():
     if algo == ALGO_OPT:
         grades_rank.rank_by_grades(c.id, run_id=run_id, publish=publish)
     elif algo == ALGO_VANCOUVER:
-        v = vancouver.Vancouver(c.id, run_id=run_id, publish=publish)
+        v = vancouver.Vancouver(c.id, run_id=run_id, publish=publish,
+                                use_median=current.vancouver_use_median,
+                                do_debias=current.vancouver_do_debias)
         v.run_evaluation()
     else:
         # DEPRECATED

@@ -533,6 +533,8 @@ def crowd_grade():
             Field('submission_rank_exponent_for_reputation', 'double', default=ALGO_DEFAULT_RANK_REP_EXP, requires=IS_FLOAT_IN_RANGE(0.1, 10.0)),
             Field('precision_method', default=ALGO_DEFAULT_PREC_METHOD, requires=IS_IN_SET([ALGO_PREC_METHOD_DIST, ALGO_PREC_METHOD_CORR])),
             Field('matrix_D_type', default=MATRIX_D_TYPE_GRADES_DIST, requires=IS_IN_SET([MATRIX_D_TYPE_GRADES_DIST, MATRIX_D_TYPE_GRADES_SINGLE])),
+            Field('do_debias', 'boolean', default=ALGO_DEFAULT_DO_DEBIAS),
+            Field('use_median', 'boolean', default=ALGO_DEFAULT_USE_MEDIAN),
             Field('num_iterations', 'integer', default=ALGO_DEFAULT_NUM_ITERATIONS, requires=IS_INT_IN_RANGE(1, 20)),
             Field('publish', 'boolean', default=False, writable=access.is_real_manager(c, props)),
             )
@@ -557,6 +559,8 @@ def crowd_grade():
             submission_rank_exp = form.vars.submission_rank_exponent_for_reputation
             precision_method = form.vars.precision_method
             num_iterations = form.vars.num_iterations
+            do_debias = form.vars.do_debias
+            use_median = form.vars.use_median
             publish = form.vars.publish
             matrix_D_type = form.vars.matrix_D_type
         else:            
@@ -573,6 +577,8 @@ def crowd_grade():
             submission_rank_exp = ALGO_DEFAULT_RANK_REP_EXP
             precision_method = ALGO_DEFAULT_PREC_METHOD
             num_iterations = ALGO_DEFAULT_NUM_ITERATIONS
+            do_debias = ALGO_DEFAULT_DO_DEBIAS
+            use_median = ALGO_DEFAULT_USE_MEDIAN
             matrix_D_type = MATRIX_D_TYPE_GRADES_DIST
             publish = True
         # Performs the computation.
@@ -593,6 +599,8 @@ def crowd_grade():
                     REPUTATION_SYSTEM_PREC_METHOD: precision_method,
                     REPUTATION_SYSTEM_PARAM_NUM_ITERATIONS: num_iterations,
                     REPUTATION_SYSTEM_STARTOVER: 'True',
+                    REPUTATION_SYSTEM_DO_DEBIAS: do_debias,
+                    REPUTATION_SYSTEM_USE_MEDIAN: use_median,
                     REPUTATION_SYSTEM_PUBLISH: publish,
                     REPUTATION_SYSTEM_MATRIX_D_TYPE: matrix_D_type,
                     },

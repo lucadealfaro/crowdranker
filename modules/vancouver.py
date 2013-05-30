@@ -7,7 +7,8 @@ import util
 
 
 class Vancouver():
-    def __init__(self, venue_id, run_id='exp', publish=False):
+    def __init__(self, venue_id, run_id='exp', publish=False,
+                 use_median=False, do_debias=False):
         self.venue_id = venue_id
         self.run_id = run_id
         self.publish = publish
@@ -17,7 +18,7 @@ class Vancouver():
         self.user_to_n_completed_tasks = {}
         self.user_list = []
         self.user_to_submission_id = {}
-        self.graph = reputation.Graph()
+        self.graph = reputation.Graph(use_median=use_median, do_debias=do_debias)
         # Grades.
         self.submission_grades = {}
         self.submission_percentiles = {}
