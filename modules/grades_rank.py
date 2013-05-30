@@ -159,25 +159,6 @@ class MinimizationObjective:
             return self.compute_inverse_hessian_Q(x, r)
         return inverse_hessian_Q
 
-def decode_json_grades(dict_grades_json):
-    """ dict_grades_json is a json serialized dictionary subm_id -> grade.
-    """
-    current.logger
-    # Getting grades.
-    try:
-        subm_id_to_grade_raw = simplejson.loads(dict_grades_json)
-    except Exception, e:
-        logger.debug("Error in reading grades")
-        return {}
-    subm_id_to_grade = {}
-    for (s, g) in subm_id_to_grade_raw.iteritems():
-        try:
-            s_id = long(s)
-        except Exception, e:
-            logger.debug("Error in reading grades")
-            return {}
-        subm_id_to_grade[s_id] = float(g)
-    return subm_id_to_grade
 
 def get_num_rows_of_D(compar_rows,
                       matrix_D_type=current.MATRIX_D_TYPE_GRADES_DIST):
@@ -221,7 +202,7 @@ def get_vector_of_average_grades(subm_id_to_list_of_grades, idx_to_subm_id):
     return avrg_grades
 
 
-def get_number_of_tasks(venue_id):
+def read_number_of_tasks(venue_id):
     """ Method returns dictionaries:
     user_to_n_graded_tasks - tasks to which a user has assigned grade
     user_to_n_rejected_tasks - rejected tasks
@@ -265,7 +246,7 @@ def read_db_for_ranking_by_grades(venue_id,
           If the value is NOT "difference_between_grades" then matrix D is
           build for the problem of minimizing \sum r c(g - x).
 
-    Method return tuple  (D, delta_vec, subm_id_to_user, user_to_bin_comp_idx_list, idx_to_subm_id, avrg_grades)
+    Method return tuple (D, delta_vec, subm_id_to_user, user_to_bin_comp_idx_list, idx_to_subm_id, avrg_grades)
     where
        - subm_id_to_user is a dictionary submission id -> author of it.
        - user_to_bin_comp_idx_list is a dictionary: user -> list of binary
@@ -285,7 +266,7 @@ def read_db_for_ranking_by_grades(venue_id,
     subm_id_to_list_of_grades = {}
     # Fetching number of completed, graded and rejected tasks per user.
     (user_to_n_completed_tasks, user_to_n_graded_tasks,
-        user_to_n_rejected_tasks) = get_number_of_tasks(venue_id)
+        user_to_n_rejected_tasks) = read_number_of_tasks(venue_id)
     # user_to_grades_dict id a dictionary mapping user to another dictionary:
     # submission id -> grade.
     user_to_grades_dict = {}
@@ -314,7 +295,7 @@ def read_db_for_ranking_by_grades(venue_id,
         # Note, that ordering is from Best to Worst.
         ordering = util.get_list(r.ordering)
         # Getting grades.
-        subm_id_to_grade = decode_json_grades(r.grades)
+        subm_id_to_grade = util.decode_json_grades(r.grades)
         if len(subm_id_to_grade) > 1:
             user_to_grades_dict[r.user] = subm_id_to_grade
         # Filling matrix D and vector delta_vec.
@@ -603,21 +584,6 @@ def get_dict_subm_id_to_subm_grade(grades_vec, idx_to_subm_id):
     return subm_id_to_grade
 
 
-def compute_percentile(user_to_grade):
-    """ Method returns a dictionary user -> percentile given a dictionary
-    user -> grade."""
-    # Computes the grade percentiles.
-    l = []
-    for u, g in user_to_grade.iteritems():
-        l.append((u, g))
-    sorted_l = sorted(l, key = lambda x: x[1], reverse=True)
-    user_to_perc = {}
-    n_users = float(len(sorted_l))
-    for i, el in enumerate(sorted_l):
-        user_to_perc[el[0]] = 100.0 * (n_users - float(i)) / n_users
-    return user_to_perc
-
-
 def compute_final_grades(user_to_subm_grade, user_to_accuracy):
     """ Computes final grade of users as a combination of grade of a submission
     and reviewer accuracy."""
@@ -666,7 +632,7 @@ def rank_by_grades(venue_id, run_id='exp', publish=False):
         # Computing user's accuracy.
         subm_id_to_subm_grade = get_dict_subm_id_to_subm_grade(x_stretched,
                                                                idx_to_subm_id)
-        subm_id_to_subm_percentile = compute_percentile(subm_id_to_subm_grade)
+        subm_id_to_subm_percentile = util.compute_percentile(subm_id_to_subm_grade)
         f = objective.compute_f(x_optimal)
 
         # Computes a mapping from each user to the grade, and the percentile.
@@ -674,7 +640,7 @@ def rank_by_grades(venue_id, run_id='exp', publish=False):
         for idx, subm_id in idx_to_subm_id.iteritems():
             user = subm_id_to_user[subm_id]
             user_to_subm_grade[user] = x_stretched[idx]
-        user_to_subm_perc = compute_percentile(user_to_subm_grade)
+        user_to_subm_perc = util.compute_percentile(user_to_subm_grade)
 
         # We compute both accuracy, and reputation.  We can experiment with which one
         # is most helpful for the ranking.
@@ -697,9 +663,9 @@ def rank_by_grades(venue_id, run_id='exp', publish=False):
             user_to_bin_compar_idx_list, subm_id_to_user, idx_to_subm_id)
         current.logger.info("Completed iteration %d" % it)
     # Okay, now we build dictionaries for writing to the db.
-    user_to_accuracy_perc = compute_percentile(user_to_accuracy)
+    user_to_accuracy_perc = util.compute_percentile(user_to_accuracy)
     user_to_final_grade = compute_final_grades(user_to_subm_grade, user_to_accuracy)
-    user_to_final_grade_perc = compute_percentile(user_to_final_grade)
+    user_to_final_grade_perc = util.compute_percentile(user_to_final_grade)
     # Writting to the db.
     logger.info("Writing Crowdgrades to the db.")
     write_db_for_ranking_by_grades(venue_id, user_to_final_grade,

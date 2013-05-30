@@ -68,7 +68,25 @@ def list_diff(l1, l2):
     for el in l1:
         if el not in l2:
             r += [el]
-    return r
+    return rdef decode_json_grades(dict_grades_json):
+    """ dict_grades_json is a json serialized dictionary subm_id -> grade.
+    """
+    # Getting grades.
+    try:
+        subm_id_to_grade_raw = simplejson.loads(dict_grades_json)
+    except Exception, e:
+        logger.debug("Error in reading grades")
+        return {}
+    subm_id_to_grade = {}
+    for (s, g) in subm_id_to_grade_raw.iteritems():
+        try:
+            s_id = long(s)
+        except Exception, e:
+            logger.debug("Error in reading grades")
+            return {}
+        subm_id_to_grade[s_id] = float(g)
+    return subm_id_to_grade
+
         
 def split_emails(s):
     """Splits the emails that occur in a string s, returning the list of emails."""
@@ -167,3 +185,41 @@ def compute_percentile(user_to_grade):
     for i, el in enumerate(sorted_l):
         user_to_perc[el[0]] = 100.0 * (n_users - float(i)) / n_users
     return user_to_perc
+
+
+def decode_json_grades(dict_grades_json):
+    """ dict_grades_json is a json serialized dictionary subm_id -> grade.
+    """
+    # Getting grades.
+    try:
+        subm_id_to_grade_raw = simplejson.loads(dict_grades_json)
+    except Exception, e:
+        logger.debug("Error in reading grades")
+        return {}
+    subm_id_to_grade = {}
+    for (s, g) in subm_id_to_grade_raw.iteritems():
+        try:
+            s_id = long(s)
+        except Exception, e:
+            logger.debug("Error in reading grades")
+            return {}
+        subm_id_to_grade[s_id] = float(g)
+    return subm_id_to_grade
+
+
+def compute_percentile(id_to_grade):
+    """ Method returns a dictionary id -> percentile given a dictionary
+    id -> grade."""
+    # Computes the grade percentiles.
+    l = []
+    for u, g in id_to_grade.iteritems():
+        l.append((u, g))
+    sorted_l = sorted(l, key = lambda x: x[1], reverse=True)
+    id_to_perc = {}
+    n_ids = float(len(sorted_l))
+    for i, el in enumerate(sorted_l):
+        id_to_perc[el[0]] = 100.0 * (n_ids - float(i)) / n_ids
+    return id_to_perc
+
+
+

@@ -98,6 +98,9 @@ def run_rep_sys():
     
     if algo == ALGO_OPT:
         grades_rank.rank_by_grades(c.id, run_id=run_id, publish=publish)
+    elif algo == ALGO_VANCOUVER:
+        v = vancouver.Vancouver(c.id, run_id=run_id, publish=publish)
+        v.run_evaluation()
     else:
         # DEPRECATED
         ranker.run_reputation_system(c.id, num_of_iterations=current.num_iterations, 
