@@ -68,24 +68,7 @@ def list_diff(l1, l2):
     for el in l1:
         if el not in l2:
             r += [el]
-    return rdef decode_json_grades(dict_grades_json):
-    """ dict_grades_json is a json serialized dictionary subm_id -> grade.
-    """
-    # Getting grades.
-    try:
-        subm_id_to_grade_raw = simplejson.loads(dict_grades_json)
-    except Exception, e:
-        logger.debug("Error in reading grades")
-        return {}
-    subm_id_to_grade = {}
-    for (s, g) in subm_id_to_grade_raw.iteritems():
-        try:
-            s_id = long(s)
-        except Exception, e:
-            logger.debug("Error in reading grades")
-            return {}
-        subm_id_to_grade[s_id] = float(g)
-    return subm_id_to_grade
+    return r
 
         
 def split_emails(s):
@@ -150,7 +133,7 @@ def produce_submission_nickname(subm):
         return '???'
 
 def get_original_extension(filename):
-    if filename is None:
+    if filename is Non            do_debias = form.vars.do_debiase:
         return ''
     else:
         return filename.split('.')[-1]
