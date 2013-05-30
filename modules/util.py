@@ -133,7 +133,7 @@ def produce_submission_nickname(subm):
         return '???'
 
 def get_original_extension(filename):
-    if filename is Non            do_debias = form.vars.do_debiase:
+    if filename is None:
         return ''
     else:
         return filename.split('.')[-1]
