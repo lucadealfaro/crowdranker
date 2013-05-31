@@ -5,7 +5,7 @@ import numpy as np
 import unittest
 
 # Basic precision, as multiple of standard deviation.
-BASIC_PRECISION = 0.0001
+BASIC_PRECISION = 0.1
 
 
 class User:
@@ -120,7 +120,7 @@ class Graph:
                 grades = []
                 variances = []
                 for m in it.msgs:
-                    if m.user != u or n_msgs == 1:
+                    if m.user != u or n_msgs < 3:
                         grades.append(m.grade)
                         variances.append(m.variance)
                 variances = np.array(variances)
@@ -128,7 +128,6 @@ class Graph:
                 weights /= np.sum(weights)
                 msg = Msg()
                 msg.item = it
-                print "Grades: %r weights: %r" % (grades, weights)
                 msg.grade = self.aggregate(grades, weights=weights)
                 msg.variance = np.sum(variances * weights * weights)
                 u.msgs.append(msg)
@@ -152,7 +151,7 @@ class Graph:
                 weights = []
                 if self.do_debias:
                     for m in u.msgs:
-                        if m.item != it or n_msgs == 1:
+                        if m.item != it or n_msgs < 3:
                             weights.append(1 / (BASIC_PRECISION + m.variance))
                             given_grade = u.grade[m.item]
                             other_grade = m.grade
@@ -167,7 +166,7 @@ class Graph:
                 variance_estimates = []
                 weights = []
                 for m in u.msgs:
-                    if m.item != it or n_msgs == 1:
+                    if m.item != it or n_msgs < 3:
                         it_grade = u.grade[m.item] - u.bias
                         variance_estimates.append((it_grade - m.grade) ** 2.0)
                         weights.append(1.0 / (BASIC_PRECISION + m.variance))
@@ -182,9 +181,11 @@ class Graph:
         for it in self.items:
             grades = []
             variances = []
+            print "For item:", it.id
             for m in it.msgs:
                 grades.append(m.grade)
                 variances.append(m.variance)
+                print "  From user:", m.user.name, "grade:", m.grade, "variance:", m.variance
             variances = np.array(variances)
             weights = 1.0 / (BASIC_PRECISION + variances)
             weights /= np.sum(weights)

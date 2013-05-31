@@ -67,6 +67,7 @@ class Vancouver():
             subm_id_to_grade = util.decode_json_grades(r.grades)
             for it_id, g in subm_id_to_grade.iteritems():
                 self.graph.add_review(r.user, it_id, g)
+                print "User", r.user, "item", it_id, "grade", g
     
     
     def read_user_list(self):
@@ -176,7 +177,8 @@ class Vancouver():
         for u in self.user_list:
             sub_g = max(0.0, subm_grades[u])
             rev_g = self.review_grades[u]
-            fg[u] = self.review_grade_fraction * rev_g + (1.0 - self.review_grade_fraction) * sub_g
+            fg[u] = (current.MAX_GRADE * self.review_grade_fraction * rev_g + 
+                     (1.0 - self.review_grade_fraction) * sub_g)
         self.final_percentiles = util.compute_percentile(fg)
         for u, g in fg.iteritems():
             self.final_grades[u] = max(0.0, min(current.MAX_GRADE, g))
