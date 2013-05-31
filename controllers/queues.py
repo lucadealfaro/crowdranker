@@ -4,6 +4,7 @@ import access
 import ranker
 import grades_rank
 import json
+import vancouver
 
 @auth.requires_signature()
 def run_rep_sys():

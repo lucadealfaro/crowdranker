@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from gluon import *
-import gluon.contrib.simplejson as simplejson
 import reputation
 import util
 
@@ -27,7 +26,8 @@ class Vancouver():
         self.final_grades = {}
         self.final_percentiles = {}
         # Reads information about how the class is run.
-        self.venue = db(db.venue.id == venue_id).select.first()
+        db = current.db
+        self.venue = db(db.venue.id == venue_id).select().first()
         if self.venue is None:
             current.logger.error("Trying to evaluate a non-existent venue! %r" % venue_id)
         self.n_assigned_tasks = self.venue.number_of_submissions_per_reviewer
@@ -62,6 +62,7 @@ class Vancouver():
     
     def read_comparisons(self):
         """Reads the comparisons for a given contest."""
+        db = current.db
         rows = db((db.comparison.venue_id == self.venue_id) &
                   (db.comparison.is_valid == True)).select()
         for r in rows:
@@ -70,7 +71,7 @@ class Vancouver():
                 self.graph.add_review(r.user, it_id, g)
     
     
-    def get_list_of_all_students(self):
+    def read_user_list(self):
         """ Gets the users that participate in the class."""
         db = current.db
         c = db.venue(self.venue_id)
@@ -90,7 +91,7 @@ class Vancouver():
         db = current.db
         rows = db(db.submission.venue_id == self.venue_id).select()
         for r in rows:
-            self.user_to_subm_id[r.user] = r.id
+            self.user_to_submission_id[r.user] = r.id
     
     
     def read_venue_data(self):
@@ -135,7 +136,7 @@ class Vancouver():
                     subm_grade = self.submission_grades[u],
                     subm_percent = self.submission_percentiles[u],
                     review_grade = self.review_grades[u],
-                    review_percent = self.review_percent[u],
+                    review_percent = self.review_percentiles[u],
                     n_ratings = self.user_to_n_completed_tasks[u],
                     grade = self.final_grades[u],
                     # TODO(luca): also write the final percentile.                                     
@@ -151,7 +152,7 @@ class Vancouver():
         min_grade = -1.0e10
         # First, submission grades.
         subm_grades = {}
-        for u in user_list:
+        for u in self.user_list:
             subm_grades[u] = min_grade
             subm_id = self.user_to_submission_id.get(u)
             if subm_id is not None:
@@ -159,12 +160,12 @@ class Vancouver():
                 if it is not None and it.grade is not None:
                     subm_grades[u] = it.grade
         # Computes the percentiles.
-        self.submission_percentiles = util.compute_percentile(self.submission_grades)
+        self.submission_percentiles = util.compute_percentile(subm_grades)
         # And normalizes the grades between 0 and the max.
-        for u, g in subm_grades:
+        for u, g in subm_grades.iteritems():
             self.submission_grades[u] = max(0.0, min(current.MAX_GRADE, g))
         # Then, computes the review grades.
-        for u in user_list:
+        for u in self.user_list:
             self.review_grades[u] = 0.0
             user_node = self.graph.get_user(u)
             if user_node is not None and user_node.quality is not None:
@@ -175,7 +176,7 @@ class Vancouver():
         # versions of the grades, so that "people that are better than 10" 
         # get extra credit that can go to their overall grade.
         fg = {}
-        for u in user_list:
+        for u in self.user_list:
             sub_g = max(0.0, subm_grades[u])
             rev_g = self.review_grades[u]
             fg[u] = self.review_grade_fraction * rev_g + (1.0 - self.review_grade_fraction) * sub_g

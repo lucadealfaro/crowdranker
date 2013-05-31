@@ -115,11 +115,12 @@ class Graph:
             # Average/median
             # Standard deviation
             # Total weight
+            n_msgs = len(it.msgs)
             for u in it.users:
                 grades = []
                 variances = []
                 for m in it.msgs:
-                    if m.user != u:
+                    if m.user != u or n_msgs == 1:
                         grades.append(m.grade)
                         variances.append(m.variance)
                 variances = np.array(variances)
@@ -127,6 +128,7 @@ class Graph:
                 weights /= np.sum(weights)
                 msg = Msg()
                 msg.item = it
+                print "Grades: %r weights: %r" % (grades, weights)
                 msg.grade = self.aggregate(grades, weights=weights)
                 msg.variance = np.sum(variances * weights * weights)
                 u.msgs.append(msg)
@@ -140,6 +142,7 @@ class Graph:
         # Sends information from users to items.  
         # The information to be sent is a grade, and an estimated standard deviation.
         for u in self.users:
+            n_msgs = len(u.msgs)
             for it in u.items:
                 # The user looks at the messages from other items, and computes
                 # what has been the bias of its evaluation. 
@@ -149,7 +152,7 @@ class Graph:
                 weights = []
                 if self.do_debias:
                     for m in u.msgs:
-                        if m.item != it:
+                        if m.item != it or n_msgs == 1:
                             weights.append(1 / (BASIC_PRECISION + m.variance))
                             given_grade = u.grade[m.item]
                             other_grade = m.grade
@@ -164,7 +167,7 @@ class Graph:
                 variance_estimates = []
                 weights = []
                 for m in u.msgs:
-                    if m.item != it:
+                    if m.item != it or n_msgs == 1:
                         it_grade = u.grade[m.item] - u.bias
                         variance_estimates.append((it_grade - m.grade) ** 2.0)
                         weights.append(1.0 / (BASIC_PRECISION + m.variance))

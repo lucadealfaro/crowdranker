@@ -4,6 +4,7 @@ from gluon import *
 import re
 import string
 import random
+import gluon.contrib.simplejson as simplejson
 
 email_split_pattern = re.compile('[,\s]+')
 whitespace = re.compile('\s+$')
@@ -177,7 +178,7 @@ def decode_json_grades(dict_grades_json):
     try:
         subm_id_to_grade_raw = simplejson.loads(dict_grades_json)
     except Exception, e:
-        logger.debug("Error in reading grades")
+        current.logger.debug("Error in reading grades")
         return {}
     subm_id_to_grade = {}
     for (s, g) in subm_id_to_grade_raw.iteritems():
