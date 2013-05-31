@@ -5,7 +5,7 @@ import numpy as np
 import unittest
 
 # Basic precision, as multiple of standard deviation.
-BASIC_PRECISION = 0.1
+BASIC_PRECISION = 0.0001
 
 
 class User:
@@ -181,11 +181,11 @@ class Graph:
         for it in self.items:
             grades = []
             variances = []
-            print "For item:", it.id
+            # print "For item:", it.id
             for m in it.msgs:
                 grades.append(m.grade)
                 variances.append(m.variance)
-                print "  From user:", m.user.name, "grade:", m.grade, "variance:", m.variance
+                # print "  From user:", m.user.name, "grade:", m.grade, "variance:", m.variance
             variances = np.array(variances)
             weights = 1.0 / (BASIC_PRECISION + variances)
             weights /= np.sum(weights)

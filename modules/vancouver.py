@@ -67,7 +67,6 @@ class Vancouver():
             subm_id_to_grade = util.decode_json_grades(r.grades)
             for it_id, g in subm_id_to_grade.iteritems():
                 self.graph.add_review(r.user, it_id, g)
-                print "User", r.user, "item", it_id, "grade", g
     
     
     def read_user_list(self):
