@@ -41,23 +41,21 @@ class Vancouver():
         user_to_n_completed_tasks
         """
         db = current.db
+        # Resets the number of tasks.
+        for u in self.user_list:
+            self.user_to_n_completed_tasks[u] = 0
+            self.user_to_n_graded_tasks[u] = 0
+            self.user_to_n_rejected_tasks[u] = 0
         rows = db(db.task.venue_id == self.venue_id).select()
         for r in rows:
             u = r.user
-            # Checking that we have initialized entries with 0.
-            if not self.user_to_n_graded_tasks.has_key(u):
-                self.user_to_n_graded_tasks[u] = 0
-            if not self.user_to_n_rejected_tasks.has_key(u):
-                self.user_to_n_rejected_tasks[u] = 0
-            if not self.user_to_n_completed_tasks.has_key(u):
-                self.user_to_n_completed_tasks[u] = 0
             # Fetching information.
             if r.is_completed:
-                self.user_to_n_completed_tasks[u] = self.user_to_n_completed_tasks[u] + 1
+                self.user_to_n_completed_tasks[u] = self.user_to_n_completed_tasks.get(u, 0) + 1
                 if r.rejected:
-                    self.user_to_n_rejected_tasks[u] = self.user_to_n_rejected_tasks[u] + 1
+                    self.user_to_n_rejected_tasks[u] = self.user_to_n_rejected_tasks.get(u, 0) + 1
                 else:
-                    self.user_to_n_graded_tasks[u] = self.user_to_n_graded_tasks[u] + 1
+                    self.user_to_n_graded_tasks[u] = self.user_to_n_graded_tasks.get(u, 0) + 1
     
     
     def read_comparisons(self):
@@ -96,13 +94,12 @@ class Vancouver():
     
     def read_venue_data(self):
         """Reads the data for the given venue."""
-        db = current.db
+        # Reading the list of all users.
+        self.read_user_list()
         # Fetching number of completed, graded and rejected tasks per user.
         self.read_number_of_tasks()
         # Reading the graph of actual evaluations.
         self.read_comparisons()
-        # Reading the list of all users.
-        self.read_user_list()
         # Reads the list of all submissions.
         self.read_user_to_submission_id()
 
