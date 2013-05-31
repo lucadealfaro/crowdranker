@@ -120,7 +120,7 @@ class Graph:
                 grades = []
                 variances = []
                 for m in it.msgs:
-                    if m.user != u or n_msgs < 3:
+                    if m.user != u or n_msgs < 2:
                         grades.append(m.grade)
                         variances.append(m.variance)
                 variances = np.array(variances)
@@ -151,7 +151,7 @@ class Graph:
                 weights = []
                 if self.do_debias:
                     for m in u.msgs:
-                        if m.item != it or n_msgs < 3:
+                        if m.item != it or n_msgs < 2:
                             weights.append(1 / (BASIC_PRECISION + m.variance))
                             given_grade = u.grade[m.item]
                             other_grade = m.grade
@@ -166,7 +166,7 @@ class Graph:
                 variance_estimates = []
                 weights = []
                 for m in u.msgs:
-                    if m.item != it or n_msgs < 3:
+                    if m.item != it or n_msgs < 2:
                         it_grade = u.grade[m.item] - u.bias
                         variance_estimates.append((it_grade - m.grade) ** 2.0)
                         weights.append(1.0 / (BASIC_PRECISION + m.variance))
