@@ -535,6 +535,7 @@ def crowd_grade():
             Field('matrix_D_type', default=MATRIX_D_TYPE_GRADES_DIST, requires=IS_IN_SET([MATRIX_D_TYPE_GRADES_DIST, MATRIX_D_TYPE_GRADES_SINGLE])),
             Field('do_debias', 'boolean', default=ALGO_DEFAULT_DO_DEBIAS),
             Field('use_median', 'boolean', default=ALGO_DEFAULT_USE_MEDIAN),
+            Field('use_reputation', 'boolean', default=ALGO_DEFAULT_USE_REPUTATION),
             Field('num_iterations', 'integer', default=ALGO_DEFAULT_NUM_ITERATIONS, requires=IS_INT_IN_RANGE(1, 20)),
             Field('publish', 'boolean', default=False, writable=access.is_real_manager(c, props)),
             )
@@ -561,6 +562,7 @@ def crowd_grade():
             num_iterations = form.vars.num_iterations
             do_debias = form.vars.do_debias
             use_median = form.vars.use_median
+            use_reputation = form.vars.use_reputation
             publish = form.vars.publish
             matrix_D_type = form.vars.matrix_D_type
         else:            

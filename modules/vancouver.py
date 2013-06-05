@@ -3,9 +3,11 @@
 from gluon import *
 import reputation
 import util
+import vancouver
 
 
-class Vancouver():
+class Vancouver:
+
     def __init__(self, venue_id, run_id='exp', publish=False,
                  use_median=False, do_debias=False):
         self.venue_id = venue_id
@@ -184,17 +186,21 @@ class Vancouver():
         # That's all, folks.
         
     
-    def run_evaluation(self):
+    def run_evaluation(self, use_reputation=True):
         """Computes the grades using the Vancouver algorithm.
         This is the main method that needs to be called."""
         if self.venue is None:
             return
         # First, I need to read the data from the db on this venue.
         self.read_venue_data()
-        # Second, computes all item grades...
-        self.graph.evaluate_items()
-        # ... and all user qualities. 
-        self.graph.evaluate_users()
+        if use_reputation:
+            # Second, computes all item grades...
+            self.graph.evaluate_items()
+            # ... and all user qualities. 
+            self.graph.evaluate_users()
+        else:
+            self.graph.avg_evaluate_items()
+            self.graph.avg_evaluate_users()
         # At this point, we have to assign the final grades.
         self.compute_grades()
         # Finally, writes the grades.

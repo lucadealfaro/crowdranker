@@ -7,6 +7,9 @@ import unittest
 # Basic precision, as multiple of standard deviation.
 BASIC_PRECISION = 0.0001
 
+# What fraction of elements to discard from top and bottom.
+ALGO_MEDIAN_DISCARD = 4
+
 
 class User:
     
@@ -233,20 +236,63 @@ class Graph:
         for u in self.users:
             u.quality = max(0.0, 1.0 - (u.variance ** 0.5) / overall_stdev)
 
+    def avg_evaluate_users(self):
+        """Evaluates users from item grades, as if no messages had actually been sent."""
+        # Computes the standard deviation of all grades ever given.
+        all_grades = []
+        for u in self.users:
+            all_grades.extend(u.grade.values())
+        overall_stdev = np.std(all_grades)
+        # The stdev of the difference between two numbers is sqrt(2) times the
+        # stdev of the numbers, assuming normal distribution.
+        overall_stdev *= 2 ** 0.5
+        for u in self.users:
+            diffs = []
+            for it in u.items:
+                d = it.grade - u.grade[it]
+                diffs.append(d * d)
+            u.variance = np.average(diffs)
+            u.quality = max(0.0, 1.0 - (u.variance ** 0.5) / overall_stdev)
+        
 
     def aggregate(self, v, weights=None):
         """Aggregates using either average or median."""
         if self.use_median:
             if weights is not None:
-                return median_aggregate(v, weights=weights)
+                return maverage_aggregate(v, weights=weights)
             else:
-                return median_aggregate(v)
+                return maverage_aggregate(v)
         else:
             if weights is not None:
                 return np.average(v, weights=weights)
             else:
                 return np.average(v)
 
+
+def maverage_aggregate(values, weights=None):
+    # Discards a fraction of top and bottom elements.
+    n = len(values)
+    v = [x for x in values]
+    if weights:
+        w = [x for x in weights]
+    else:
+        w = [1.0 for x in values]
+    # Sorts the values.
+    vv = []
+    for i, x in enumerate(v):
+        vv.append(x, w[i])
+    vv.sort()
+    v = [x for x, _ in vv]
+    w = [x for _, x in vv]
+    # Discards the extremes.
+    k = n / ALGO_MEDIAN_DISCARD
+    if k == 0:
+        return np.average(v, weights=w)
+    else:        
+        v = values[k:-k]
+        w = weights[k:-k]
+        return np.average(v, weights=w)
+    
 
 def median_aggregate(values, weights=None):
     if len(values) == 1:
@@ -339,17 +385,17 @@ class test_reputation(unittest.TestCase):
         g.add_review('anna', 'pizza', 7.0)
         g.add_review('anna', 'pasta', 8.5)
         g.add_review('anna', 'pollo', 5.5)
-        g.evaluate_items()
+        g.avg_evaluate_items()
         print 'pasta', g.get_item('pasta').grade
         print 'pizza', g.get_item('pizza').grade
         print 'pollo', g.get_item('pollo').grade
+        g.avg_evaluate_users()
         print 'variances:'
         print 'luca', g.get_user('luca').variance
         print 'mike', g.get_user('mike').variance
         print 'hugo', g.get_user('hugo').variance
         print 'anna', g.get_user('anna').variance
         print 'qualities:'
-        g.evaluate_users()
         print 'luca', g.get_user('luca').quality
         print 'mike', g.get_user('mike').quality
         print 'hugo', g.get_user('hugo').quality
