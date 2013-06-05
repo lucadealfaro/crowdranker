@@ -51,16 +51,16 @@ def grade_score(grades1, grades2):
     a2 = N.array([map2[id] for id in ids])
     if a1.size < 2:
         return 0.0
-    current.logger.info("a1: %r" % a1)
-    current.logger.info("a2: %r" % a2)
+    #current.logger.info("a1: %r" % a1)
+    #current.logger.info("a2: %r" % a2)
     a1 = a1 - N.average(a1)
     a2 = a2 - N.average(a2)
     a1 = a1 / N.std(a1)
     a2 = a2 / N.std(a2)
     s = N.std(a1 - a2)
-    current.logger.info("a1 n: %r" % a1)
-    current.logger.info("a2 n: %r" % a2)
-    current.logger.info("s: %r" % s)
+    #current.logger.info("a1 n: %r" % a1)
+    #current.logger.info("a2 n: %r" % a2)
+    #current.logger.info("s: %r" % s)
     return 1.0 - s / (2.0 ** 0.5)
 
 

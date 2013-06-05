@@ -273,14 +273,14 @@ def maverage_aggregate(values, weights=None):
     # Discards a fraction of top and bottom elements.
     n = len(values)
     v = [x for x in values]
-    if weights:
+    if weights is not None:
         w = [x for x in weights]
     else:
         w = [1.0 for x in values]
     # Sorts the values.
     vv = []
     for i, x in enumerate(v):
-        vv.append(x, w[i])
+        vv.append((x, w[i]))
     vv.sort()
     v = [x for x, _ in vv]
     w = [x for _, x in vv]
