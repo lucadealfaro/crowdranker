@@ -520,7 +520,7 @@ def crowd_grade():
         redirect(URL('default', 'index'))
     if is_user_admin():
         form = SQLFORM.factory(
-            Field('algo', default=ALGO_OPT, requires=IS_IN_SET(ALGO_LIST)),
+            Field('algo', default=ALGO_DEFAULT, requires=IS_IN_SET(ALGO_LIST)),
             Field('run_id', default='exp'),
             Field('cost_type', default=ALGO_DEFAULT_COST_TYPE, requires=IS_IN_SET(['linear', 'quadratic'])),
             Field('pos_slope', 'double', default=ALGO_DEFAULT_POS_SLOPE, requires=IS_FLOAT_IN_RANGE(0.0, 1000.0)),
@@ -581,6 +581,7 @@ def crowd_grade():
             num_iterations = ALGO_DEFAULT_NUM_ITERATIONS
             do_debias = ALGO_DEFAULT_DO_DEBIAS
             use_median = ALGO_DEFAULT_USE_MEDIAN
+            use_reputation = ALGO_DEFAULT_USE_REPUTATION
             matrix_D_type = MATRIX_D_TYPE_GRADES_DIST
             publish = True
         # Performs the computation.
@@ -603,6 +604,7 @@ def crowd_grade():
                     REPUTATION_SYSTEM_STARTOVER: 'True',
                     REPUTATION_SYSTEM_DO_DEBIAS: do_debias,
                     REPUTATION_SYSTEM_USE_MEDIAN: use_median,
+                    REPUTATION_SYSTEM_USE_REPUTATION: use_reputation,
                     REPUTATION_SYSTEM_PUBLISH: publish,
                     REPUTATION_SYSTEM_MATRIX_D_TYPE: matrix_D_type,
                     },
