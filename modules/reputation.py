@@ -289,8 +289,8 @@ def maverage_aggregate(values, weights=None):
     if k == 0:
         return np.average(v, weights=w)
     else:        
-        v = values[k:-k]
-        w = weights[k:-k]
+        v = v[k:-k]
+        w = w[k:-k]
         return np.average(v, weights=w)
     
 
