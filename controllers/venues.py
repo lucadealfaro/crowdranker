@@ -507,15 +507,7 @@ def edit():
         else:
             create_venue(id, form)
             logger.info("User " + get_user_email() + " created venue: http://www.crowdgrader.org" + URL('venues', 'view_venue', args=[id]))
-            
-            # Sends email.
-            from google.appengine.api import mail
-            venue_url =  URL('venues', 'view_venue', args=[id])
-            subject = "New assignment created"
-            body = ("A new assignment has been created by: " + get_user_email() + "\n" +
-                    "Assignment URL: https://crowdgrader.appspot.com" + venue_url)
-            mail.send_mail_to_admins(EMAIL_FROM, subject, body)
-            
+                        
             session.flash = T('The assignment has been created. ')
             if default_is_approved:
                 redirect(URL('venues', 'view_venue', args=[id]))
