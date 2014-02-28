@@ -1,8 +1,0 @@
-CrowdRanker is Copyright of the following contributors:
-
-Main contributors: 
-
-Luca de Alfaro <luca@cs.stanford.edu>, <luca@dealfaro.org>, <luca@ucsc.edu>
-Michael Shavlovsky <mshavlov@ucsc.edu>, <mshavlovsky@gmail.com>
- 
-
